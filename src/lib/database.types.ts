@@ -267,6 +267,371 @@ export type Database = {
           },
         ];
       };
+      allocations: {
+        Row: {
+          id: string;
+          program_id: string;
+          team_id: string | null;
+          person_id: string;
+          base_weekly_minutes: number;
+          percent: number;
+          planned_weekly_minutes: number | null;
+          valid_from: string;
+          valid_to: string | null;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          team_id?: string | null;
+          person_id: string;
+          base_weekly_minutes: number;
+          percent?: number;
+          planned_weekly_minutes?: number | null;
+          valid_from: string;
+          valid_to?: string | null;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          team_id?: string | null;
+          person_id?: string;
+          base_weekly_minutes?: number;
+          percent?: number;
+          planned_weekly_minutes?: number | null;
+          valid_from?: string;
+          valid_to?: string | null;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "allocations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "allocations_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "allocations_program_id_fkey";
+            columns: ["program_id"];
+            isOneToOne: false;
+            referencedRelation: "programs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "allocations_team_fk";
+            columns: ["team_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id", "program_id"];
+          },
+        ];
+      };
+      assessment_errors: {
+        Row: {
+          id: string;
+          assessment_id: string;
+          program_id: string;
+          competency_id: string | null;
+          description: string;
+          root_cause: string | null;
+          corrective_action: string | null;
+          owner_person_id: string | null;
+          due_date: string | null;
+          status: Database["public"]["Enums"]["error_action_status"];
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          assessment_id: string;
+          program_id: string;
+          competency_id?: string | null;
+          description: string;
+          root_cause?: string | null;
+          corrective_action?: string | null;
+          owner_person_id?: string | null;
+          due_date?: string | null;
+          status?: Database["public"]["Enums"]["error_action_status"];
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          assessment_id?: string;
+          program_id?: string;
+          competency_id?: string | null;
+          description?: string;
+          root_cause?: string | null;
+          corrective_action?: string | null;
+          owner_person_id?: string | null;
+          due_date?: string | null;
+          status?: Database["public"]["Enums"]["error_action_status"];
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessment_errors_competency_fk";
+            columns: ["competency_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "competencies";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "assessment_errors_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_errors_fk";
+            columns: ["assessment_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "assessments";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "assessment_errors_owner_person_id_fkey";
+            columns: ["owner_person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assessment_results: {
+        Row: {
+          id: string;
+          assessment_id: string;
+          program_id: string;
+          person_id: string | null;
+          criterion: string | null;
+          score: number;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          assessment_id: string;
+          program_id: string;
+          person_id?: string | null;
+          criterion?: string | null;
+          score: number;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          assessment_id?: string;
+          program_id?: string;
+          person_id?: string | null;
+          criterion?: string | null;
+          score?: number;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessment_results_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessment_results_fk";
+            columns: ["assessment_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "assessments";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "assessment_results_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      assessments: {
+        Row: {
+          id: string;
+          program_id: string;
+          team_id: string;
+          occupation_id: string | null;
+          type: Database["public"]["Enums"]["assessment_type"];
+          title: string;
+          test_version: string | null;
+          criteria_version: string | null;
+          held_on: string;
+          scale: Database["public"]["Enums"]["score_scale"];
+          scale_max: number;
+          planned_minutes: number | null;
+          actual_minutes: number | null;
+          status: Database["public"]["Enums"]["assessment_status"];
+          review_note: string | null;
+          published_at: string | null;
+          published_by: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          team_id: string;
+          occupation_id?: string | null;
+          type: Database["public"]["Enums"]["assessment_type"];
+          title: string;
+          test_version?: string | null;
+          criteria_version?: string | null;
+          held_on: string;
+          scale: Database["public"]["Enums"]["score_scale"];
+          scale_max: number;
+          planned_minutes?: number | null;
+          actual_minutes?: number | null;
+          status?: Database["public"]["Enums"]["assessment_status"];
+          review_note?: string | null;
+          published_at?: string | null;
+          published_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          team_id?: string;
+          occupation_id?: string | null;
+          type?: Database["public"]["Enums"]["assessment_type"];
+          title?: string;
+          test_version?: string | null;
+          criteria_version?: string | null;
+          held_on?: string;
+          scale?: Database["public"]["Enums"]["score_scale"];
+          scale_max?: number;
+          planned_minutes?: number | null;
+          actual_minutes?: number | null;
+          status?: Database["public"]["Enums"]["assessment_status"];
+          review_note?: string | null;
+          published_at?: string | null;
+          published_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assessments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessments_occupation_fk";
+            columns: ["occupation_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "occupations";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "assessments_published_by_fkey";
+            columns: ["published_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "assessments_team_fk";
+            columns: ["team_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id", "program_id"];
+          },
+        ];
+      };
+      attendance: {
+        Row: {
+          session_id: string;
+          program_id: string;
+          person_id: string;
+          status: Database["public"]["Enums"]["attendance_status"];
+          attended_minutes: number;
+          justification: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          session_id: string;
+          program_id: string;
+          person_id: string;
+          status: Database["public"]["Enums"]["attendance_status"];
+          attended_minutes: number;
+          justification?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          session_id?: string;
+          program_id?: string;
+          person_id?: string;
+          status?: Database["public"]["Enums"]["attendance_status"];
+          attended_minutes?: number;
+          justification?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "attendance_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "attendance_person_id_fkey";
+            columns: ["person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "attendance_session_fk";
+            columns: ["session_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "training_sessions";
+            referencedColumns: ["id", "program_id"];
+          },
+        ];
+      };
       audit_log: {
         Row: {
           id: number;
@@ -603,6 +968,63 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      competencies: {
+        Row: {
+          id: string;
+          program_id: string;
+          occupation_id: string;
+          name: string;
+          weight: number | null;
+          weight_source: string | null;
+          position: number;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          occupation_id: string;
+          name: string;
+          weight?: number | null;
+          weight_source?: string | null;
+          position?: number;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          occupation_id?: string;
+          name?: string;
+          weight?: number | null;
+          weight_source?: string | null;
+          position?: number;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "competencies_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "competencies_occupation_fk";
+            columns: ["occupation_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "occupations";
+            referencedColumns: ["id", "program_id"];
           },
         ];
       };
@@ -1146,6 +1568,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           created_by: string | null;
+          target_scale: Database["public"]["Enums"]["score_scale"];
         };
         Insert: {
           id?: string;
@@ -1158,6 +1581,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           created_by?: string | null;
+          target_scale?: Database["public"]["Enums"]["score_scale"];
         };
         Update: {
           id?: string;
@@ -1170,6 +1594,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           created_by?: string | null;
+          target_scale?: Database["public"]["Enums"]["score_scale"];
         };
         Relationships: [
           {
@@ -1375,6 +1800,63 @@ export type Database = {
           },
         ];
       };
+      score_targets: {
+        Row: {
+          id: string;
+          program_id: string;
+          occupation_id: string;
+          month: string;
+          target: number;
+          scale: Database["public"]["Enums"]["score_scale"];
+          status: Database["public"]["Enums"]["target_status"];
+          source: string;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          occupation_id: string;
+          month: string;
+          target: number;
+          scale?: Database["public"]["Enums"]["score_scale"];
+          status?: Database["public"]["Enums"]["target_status"];
+          source: string;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          occupation_id?: string;
+          month?: string;
+          target?: number;
+          scale?: Database["public"]["Enums"]["score_scale"];
+          status?: Database["public"]["Enums"]["target_status"];
+          source?: string;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "score_targets_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "score_targets_occupation_fk";
+            columns: ["occupation_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "occupations";
+            referencedColumns: ["id", "program_id"];
+          },
+        ];
+      };
       stages: {
         Row: {
           id: string;
@@ -1557,6 +2039,251 @@ export type Database = {
           },
         ];
       };
+      training_items: {
+        Row: {
+          id: string;
+          plan_id: string;
+          program_id: string;
+          competency_id: string | null;
+          objective: string;
+          activity: string;
+          planned_minutes: number;
+          responsible_person_id: string | null;
+          resource: string | null;
+          expected_evidence: string | null;
+          acceptance_criteria: string | null;
+          due_date: string;
+          status: Database["public"]["Enums"]["training_item_status"];
+          status_note: string | null;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          plan_id: string;
+          program_id: string;
+          competency_id?: string | null;
+          objective: string;
+          activity: string;
+          planned_minutes: number;
+          responsible_person_id?: string | null;
+          resource?: string | null;
+          expected_evidence?: string | null;
+          acceptance_criteria?: string | null;
+          due_date: string;
+          status?: Database["public"]["Enums"]["training_item_status"];
+          status_note?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          plan_id?: string;
+          program_id?: string;
+          competency_id?: string | null;
+          objective?: string;
+          activity?: string;
+          planned_minutes?: number;
+          responsible_person_id?: string | null;
+          resource?: string | null;
+          expected_evidence?: string | null;
+          acceptance_criteria?: string | null;
+          due_date?: string;
+          status?: Database["public"]["Enums"]["training_item_status"];
+          status_note?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "training_items_competency_fk";
+            columns: ["competency_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "competencies";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "training_items_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_items_plan_fk";
+            columns: ["plan_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "training_plans";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "training_items_responsible_person_id_fkey";
+            columns: ["responsible_person_id"];
+            isOneToOne: false;
+            referencedRelation: "people";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      training_plans: {
+        Row: {
+          id: string;
+          program_id: string;
+          team_id: string;
+          family_id: string;
+          version: number;
+          title: string;
+          period_start: string;
+          period_end: string;
+          status: Database["public"]["Enums"]["training_plan_status"];
+          change_note: string | null;
+          published_at: string | null;
+          published_by: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          team_id: string;
+          family_id?: string;
+          version?: number;
+          title: string;
+          period_start: string;
+          period_end: string;
+          status?: Database["public"]["Enums"]["training_plan_status"];
+          change_note?: string | null;
+          published_at?: string | null;
+          published_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          team_id?: string;
+          family_id?: string;
+          version?: number;
+          title?: string;
+          period_start?: string;
+          period_end?: string;
+          status?: Database["public"]["Enums"]["training_plan_status"];
+          change_note?: string | null;
+          published_at?: string | null;
+          published_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "training_plans_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_plans_published_by_fkey";
+            columns: ["published_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_plans_team_fk";
+            columns: ["team_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id", "program_id"];
+          },
+        ];
+      };
+      training_sessions: {
+        Row: {
+          id: string;
+          program_id: string;
+          team_id: string;
+          training_item_id: string | null;
+          competency_id: string | null;
+          starts_at: string;
+          ends_at: string;
+          actual_minutes: number;
+          location: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          team_id: string;
+          training_item_id?: string | null;
+          competency_id?: string | null;
+          starts_at: string;
+          ends_at: string;
+          actual_minutes: number;
+          location?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          team_id?: string;
+          training_item_id?: string | null;
+          competency_id?: string | null;
+          starts_at?: string;
+          ends_at?: string;
+          actual_minutes?: number;
+          location?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "training_sessions_competency_fk";
+            columns: ["competency_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "competencies";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "training_sessions_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "training_sessions_item_fk";
+            columns: ["training_item_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "training_items";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "training_sessions_team_fk";
+            columns: ["team_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id", "program_id"];
+          },
+        ];
+      };
       units: {
         Row: {
           id: string;
@@ -1595,6 +2322,114 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      weekly_reports: {
+        Row: {
+          id: string;
+          program_id: string;
+          team_id: string;
+          week_start: string;
+          version: number;
+          supersedes_id: string | null;
+          planned_minutes: number;
+          actual_minutes: number;
+          outcomes: string | null;
+          blockers: string | null;
+          intervention: string | null;
+          next_steps: string | null;
+          status: Database["public"]["Enums"]["weekly_report_status"];
+          submitted_at: string | null;
+          submitted_by: string | null;
+          review_note: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          team_id: string;
+          week_start: string;
+          version?: number;
+          supersedes_id?: string | null;
+          planned_minutes?: number;
+          actual_minutes?: number;
+          outcomes?: string | null;
+          blockers?: string | null;
+          intervention?: string | null;
+          next_steps?: string | null;
+          status?: Database["public"]["Enums"]["weekly_report_status"];
+          submitted_at?: string | null;
+          submitted_by?: string | null;
+          review_note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          team_id?: string;
+          week_start?: string;
+          version?: number;
+          supersedes_id?: string | null;
+          planned_minutes?: number;
+          actual_minutes?: number;
+          outcomes?: string | null;
+          blockers?: string | null;
+          intervention?: string | null;
+          next_steps?: string | null;
+          status?: Database["public"]["Enums"]["weekly_report_status"];
+          submitted_at?: string | null;
+          submitted_by?: string | null;
+          review_note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reports_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_reports_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_reports_submitted_by_fkey";
+            columns: ["submitted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "weekly_reports_supersedes_fk";
+            columns: ["supersedes_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "weekly_reports";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "weekly_reports_team_fk";
+            columns: ["team_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id", "program_id"];
           },
         ];
       };
@@ -1640,6 +2475,10 @@ export type Database = {
         Args: { p_run: string };
         Returns: Database["public"]["Tables"]["checklist_runs"]["Row"];
       };
+      correct_weekly_report: {
+        Args: { p_report: string };
+        Returns: Database["public"]["Tables"]["weekly_reports"]["Row"];
+      };
       link_person_to_user: {
         Args: { p_person: string; p_email: string };
         Returns: string;
@@ -1652,11 +2491,27 @@ export type Database = {
         Args: { p_template: string };
         Returns: Database["public"]["Tables"]["checklist_templates"]["Row"];
       };
+      new_training_plan_version: {
+        Args: { p_plan: string; p_note: string };
+        Returns: Database["public"]["Tables"]["training_plans"]["Row"];
+      };
+      publish_assessment: {
+        Args: { p_assessment: string };
+        Returns: Database["public"]["Tables"]["assessments"]["Row"];
+      };
       publish_checklist_template: {
         Args: { p_template: string };
         Returns: Database["public"]["Tables"]["checklist_templates"]["Row"];
       };
+      publish_training_plan: {
+        Args: { p_plan: string };
+        Returns: Database["public"]["Tables"]["training_plans"]["Row"];
+      };
       refresh_alerts: {
+        Args: never;
+        Returns: { created: number; resolved: number }[];
+      };
+      refresh_alerts_ws: {
         Args: never;
         Returns: { created: number; resolved: number }[];
       };
@@ -1664,11 +2519,18 @@ export type Database = {
         Args: { p_action: string; p_status: Database["public"]["Enums"]["action_status"]; p_note?: string };
         Returns: Database["public"]["Tables"]["actions"]["Row"];
       };
+      set_weekly_report_status: {
+        Args: { p_report: string; p_status: Database["public"]["Enums"]["weekly_report_status"]; p_note?: string };
+        Returns: Database["public"]["Tables"]["weekly_reports"]["Row"];
+      };
     };
     Enums: {
       action_history_kind: "criada" | "status" | "edicao" | "comentario" | "evidencia" | "dependencia";
       action_priority: "baixa" | "media" | "alta" | "critica";
       action_status: "aberta" | "em_andamento" | "bloqueada" | "concluida" | "cancelada";
+      assessment_status: "rascunho" | "publicado";
+      assessment_type: "parcial" | "completo" | "externo" | "diagnostico";
+      attendance_status: "presente" | "parcial" | "ausente" | "justificada";
       checklist_answer_value: "sim" | "nao" | "na";
       checklist_cadence: "semanal" | "mensal" | "avulsa";
       checklist_run_status: "aberto" | "concluido";
@@ -1676,13 +2538,19 @@ export type Database = {
       checklist_template_status: "rascunho" | "publicado" | "substituido";
       competition_kind: "worldskills" | "inova" | "frc" | "giaffone" | "ekart" | "outra";
       document_classification: "interno" | "restrito" | "confidencial";
+      error_action_status: "aberta" | "em_andamento" | "concluida";
       event_exception_kind: "cancelada" | "alterada";
       event_type: "treino" | "reuniao" | "simulado" | "banca" | "visita" | "competicao" | "prazo" | "outro";
       membership_role: "supervisao" | "orientador" | "competidor" | "gestao" | "avaliador" | "napi";
       person_kind: "aluno" | "docente" | "colaborador" | "externo";
       program_status: "planejamento" | "ativo" | "encerrado";
       recurrence_freq: "diaria" | "semanal" | "mensal";
+      score_scale: "worldskills" | "percentual" | "pontos_brutos";
+      target_status: "proposta" | "aprovada";
       team_member_role: "competidor" | "suplente" | "orientador_titular" | "orientador_reserva";
+      training_item_status: "previsto" | "concluido" | "cancelado";
+      training_plan_status: "rascunho" | "publicado" | "substituido";
+      weekly_report_status: "rascunho" | "enviado" | "em_revisao" | "aprovado" | "devolvido";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1703,6 +2571,9 @@ export const Constants = {
       action_history_kind: ["criada", "status", "edicao", "comentario", "evidencia", "dependencia"],
       action_priority: ["baixa", "media", "alta", "critica"],
       action_status: ["aberta", "em_andamento", "bloqueada", "concluida", "cancelada"],
+      assessment_status: ["rascunho", "publicado"],
+      assessment_type: ["parcial", "completo", "externo", "diagnostico"],
+      attendance_status: ["presente", "parcial", "ausente", "justificada"],
       checklist_answer_value: ["sim", "nao", "na"],
       checklist_cadence: ["semanal", "mensal", "avulsa"],
       checklist_run_status: ["aberto", "concluido"],
@@ -1710,13 +2581,19 @@ export const Constants = {
       checklist_template_status: ["rascunho", "publicado", "substituido"],
       competition_kind: ["worldskills", "inova", "frc", "giaffone", "ekart", "outra"],
       document_classification: ["interno", "restrito", "confidencial"],
+      error_action_status: ["aberta", "em_andamento", "concluida"],
       event_exception_kind: ["cancelada", "alterada"],
       event_type: ["treino", "reuniao", "simulado", "banca", "visita", "competicao", "prazo", "outro"],
       membership_role: ["supervisao", "orientador", "competidor", "gestao", "avaliador", "napi"],
       person_kind: ["aluno", "docente", "colaborador", "externo"],
       program_status: ["planejamento", "ativo", "encerrado"],
       recurrence_freq: ["diaria", "semanal", "mensal"],
+      score_scale: ["worldskills", "percentual", "pontos_brutos"],
+      target_status: ["proposta", "aprovada"],
       team_member_role: ["competidor", "suplente", "orientador_titular", "orientador_reserva"],
+      training_item_status: ["previsto", "concluido", "cancelado"],
+      training_plan_status: ["rascunho", "publicado", "substituido"],
+      weekly_report_status: ["rascunho", "enviado", "em_revisao", "aprovado", "devolvido"],
     },
   },
 } as const;
