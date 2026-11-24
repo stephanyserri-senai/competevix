@@ -1,9 +1,14 @@
 # COMPETE VIX
 
 Portal de gestão integrada das competições do SENAI Vitória (Beira-Mar e Porto).
-Documento norteador: [`docs/COMPETE_VIX_PRD.md`](docs/COMPETE_VIX_PRD.md) v0.1 (24/11/2026). Plano técnico em
+Documento norteador: [`docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md`](<docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md>) v0.1 (24/11/2026). Plano técnico em
 [`docs/PLANO_IMPLEMENTACAO.md`](docs/PLANO_IMPLEMENTACAO.md); relatório da etapa atual em
 [`docs/ETAPA_1.md`](docs/ETAPA_1.md).
+
+A estrutura documental de gestão (ciclo 2027–2028: plano diretor, cronograma, planos de
+treinamento, matrizes, atas, benchmarking) está em [`docs/gestao-estrategica/`](docs/gestao-estrategica/README.md).
+Esses modelos são preliminares; o portal é a fonte operacional e a correspondência entre
+documentos e módulos está em [`docs/gestao-estrategica/MAPEAMENTO_PORTAL.md`](docs/gestao-estrategica/MAPEAMENTO_PORTAL.md).
 
 > Nome, arquitetura e regras operacionais são **propostas** (PRD §1). Não publicar sem
 > aprovação institucional de hospedagem e tratamento de dados (PRD §10).
