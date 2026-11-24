@@ -77,6 +77,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
     const progName = new Map(programs.map((p) => [p.id, programLabel(p)]));
     const unitName = new Map((units ?? []).map((u) => [u.id, u.name]));
     const today = todayLocal();
+    const activePrograms = programs.filter((p) => !p.archived_at);
     const filtered = (users ?? []).filter((u) => !q || `${u.display_name} ${u.email}`.toLowerCase().includes(q.toLowerCase()));
 
     return (
@@ -122,6 +123,12 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
                       })}
                     </ul>
                   )}
+                  {activePrograms.length === 0 && (units ?? []).length === 0 ? (
+                    <Alert tone="warning" title="Nenhum programa ou unidade cadastrado">
+                      Execute o cadastro inicial (<code>supabase/seed/references.sql</code>) no SQL Editor do Supabase ou cadastre unidades
+                      na aba Unidades e programas em Competições antes de criar vínculos.
+                    </Alert>
+                  ) : null}
                   <details>
                     <summary className="cursor-pointer text-sm font-medium text-brand-700">+ Novo vínculo de acesso</summary>
                     <ActionForm action={addMembership} schema="membership" resetOnSuccess submitLabel="Criar vínculo" className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -135,7 +142,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
                       </SelectField>
                       <SelectField id={`pr-${u.id}`} name="program_id" label="Programa" defaultValue="">
                         <option value="">—</option>
-                        {programs.filter((p) => !p.archived_at).map((p) => <option key={p.id} value={p.id}>{programLabel(p)}</option>)}
+                        {activePrograms.map((p) => <option key={p.id} value={p.id}>{programLabel(p)}</option>)}
                       </SelectField>
                       <SelectField id={`un-${u.id}`} name="unit_id" label="Unidade" defaultValue="">
                         <option value="">—</option>
