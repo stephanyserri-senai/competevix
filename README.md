@@ -77,6 +77,12 @@ npx supabase gen types typescript --local > src/lib/database.types.ts
 2. Aplique as migrations em ordem: `npx supabase link --project-ref <ref>` e `npx supabase db push`.
 3. Aplique `supabase/seed/references.sql`. O `demo.sql` é opcional e **somente** para desenvolvimento.
 
+### Opção C — sem terminal (SQL Editor)
+
+Abra `supabase/instalacao/instalacao_completa.sql` no GitHub (botão **Raw**), copie tudo e execute
+**uma única vez** no SQL Editor de um projeto novo. Contém todas as migrations e as referências do PRD,
+numa transação. Para regenerar após novas migrations: `scripts/bundle-sql.sh`.
+
 ### Configurações obrigatórias no painel do Supabase (Auth)
 
 - **Desabilitar cadastro público** (Authentication → Sign In / Providers → *Allow new users to sign up* = off). Acesso só por convite.
