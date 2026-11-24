@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/*
+ * Identidade visual COMPETE VIX — institucional, sem logotipos oficiais (PRD §3).
+ * Azul institucional (primário) + laranja (destaque). Contraste AA verificado para
+ * texto: brand-700/800 sobre branco, branco sobre brand-700, accent-700 sobre branco.
+ */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --color-brand-50: #eef4fb;
+  --color-brand-100: #d6e4f5;
+  --color-brand-200: #adc8ea;
+  --color-brand-300: #7ea7db;
+  --color-brand-400: #4f82c6;
+  --color-brand-500: #2d63ad;
+  --color-brand-600: #1d4f95;
+  --color-brand-700: #153f7a;
+  --color-brand-800: #0f305f;
+  --color-brand-900: #0a2244;
+
+  --color-accent-50: #fff4ec;
+  --color-accent-100: #ffe3cf;
+  --color-accent-400: #f8913f;
+  --color-accent-500: #f2711c;
+  --color-accent-600: #d85b0a;
+  --color-accent-700: #b04808;
+
+  --color-surface: #ffffff;
+  --color-canvas: #f4f6fa;
+}
+
+html {
+  color-scheme: light;
+}
+body {
+  background: var(--color-canvas);
+  color: #1e293b;
+}
+
+/* Foco visível consistente (acessibilidade por teclado) */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-accent-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}
