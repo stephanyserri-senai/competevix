@@ -15,6 +15,7 @@ import { formatDate, formatDateTime, todayLocal } from "@/lib/dates";
 import { listPrograms, programLabel } from "@/features/programas/queries";
 import { addMembership, inviteUser, revokeMembership, setUserActive } from "@/features/admin/actions";
 import { saveUnit, setArchived } from "@/features/programas/actions";
+import { BulkImport } from "@/features/admin/bulk-import";
 
 export const metadata: Metadata = { title: "Configurações" };
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -30,7 +31,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
   const sp = await searchParams;
   const access = await requireAccess();
   const supabase = await createClient();
-  const tab = one(sp.aba) || (access.isAdmin ? "usuarios" : "auditoria");
+  const tab = one(sp.aba) || (access.isAdmin ? "importar" : "auditoria");
   const isSup = isSupervisorAnywhere(access);
 
   if (!access.isAdmin && !isSup) {
@@ -43,7 +44,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
   }
 
   const tabs = [
-    ...(access.isAdmin ? [["usuarios", "Usuários e vínculos"], ["unidades", "Unidades"]] : []),
+    ...(access.isAdmin ? [["importar", "Importar usuários"], ["usuarios", "Usuários e vínculos"], ["unidades", "Unidades"]] : []),
     ["parametros", "Parâmetros"],
     ["auditoria", "Auditoria"],
   ] as const;
@@ -60,6 +61,29 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
         ))}
       </nav>
       {tab === "usuarios" && access.isAdmin ? <UsersTab q={one(sp.usuario)} /> : null}
+      {tab === "importar" && access.isAdmin ? (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader title="Importar usuários em massa" description="Cria usuários, vínculos de acesso (papel + unidade ou programa + vigência) e, para orientadores e competidores, o cadastro de pessoa ligado ao login." />
+            <CardBody><BulkImport /></CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Colunas do CSV" />
+            <CardBody className="space-y-2 text-sm text-slate-700">
+              <p><code>email; nome; papel; unidade; competicao; ciclo; inicio; fim</code></p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li><strong>papel</strong>: supervisao, orientador, competidor, gestao ou avaliador.</li>
+                <li><strong>unidade</strong>: código (BEIRA-MAR, PORTO) ou nome.</li>
+                <li><strong>competicao</strong> + <strong>ciclo</strong>: códigos do programa (ex.: WORLDSKILLS e 2027). Em branco = unidade inteira (só supervisão e gestão).</li>
+                <li><strong>inicio</strong>/<strong>fim</strong>: opcionais (DD/MM/AAAA). Avaliadores: informe o fim.</li>
+                <li>Mais de um papel ou programa para a mesma pessoa = uma linha para cada.</li>
+              </ul>
+              <p>Primeiro clique em <strong>Validar</strong>: nada é gravado até não haver erros e você clicar em <strong>Importar</strong>. Linhas repetidas em nova importação são ignoradas (“vínculo já existia”).</p>
+              <p className="text-xs text-slate-500">Vincular pessoas às equipes continua em Equipes (supervisão).</p>
+            </CardBody>
+          </Card>
+        </div>
+      ) : null}
       {tab === "unidades" && access.isAdmin ? <UnitsTab /> : null}
       {tab === "parametros" ? <ParamsTab /> : null}
       {tab === "auditoria" ? <AuditTab table={one(sp.tabela)} /> : null}
