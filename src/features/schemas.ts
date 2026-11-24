@@ -259,6 +259,157 @@ export const membershipSchema = z
   })
   .refine((d) => !d.valid_to || d.valid_to >= d.valid_from, { path: ["valid_to"], message: "Fim deve ser igual ou posterior ao início." });
 
+/* ----------------------------------------------------- Etapa 2: WorldSkills */
+const zMinutes = (label: string, max = 20000) =>
+  z.coerce.number({ message: `${label}: informe um número.` }).int(`${label}: use minutos inteiros.`).min(1, `${label}: mínimo 1 minuto.`).max(max, `${label}: valor muito alto.`);
+const zHours = (label: string) =>
+  z.coerce.number({ message: `${label}: informe horas.` }).min(1, `${label}: mínimo 1 h.`).max(70, `${label}: máximo 70 h.`);
+
+export const allocationSchema = z
+  .object({
+    program_id: zUuid("Programa"),
+    team_id: zOptUuid("Equipe"),
+    person_id: zUuid("Pessoa"),
+    base_weekly_hours: zHours("Jornada semanal"),
+    percent: z.coerce.number().min(1, "Percentual entre 1 e 100.").max(100, "Percentual entre 1 e 100."),
+    valid_from: zDate("Início"),
+    valid_to: zOptDate("Fim"),
+    note: zOptText(500, "Observação"),
+  })
+  .refine((d) => !d.valid_to || d.valid_to >= d.valid_from, { path: ["valid_to"], message: "Fim deve ser igual ou posterior ao início." });
+
+export const competencySchema = z
+  .object({
+    id: zOptId,
+    program_id: zUuid("Programa"),
+    occupation_id: zUuid("Ocupação"),
+    name: zText(2, 160, "Competência"),
+    weight: z.preprocess(emptyToNull, z.coerce.number().min(0).max(1000).nullable()),
+    weight_source: zOptText(300, "Fonte do peso"),
+  })
+  .refine((d) => d.weight === null || Boolean(d.weight_source), { path: ["weight_source"], message: "Peso exige fonte (documento técnico oficial validado)." });
+
+export const trainingPlanSchema = z
+  .object({ program_id: zUuid("Programa"), team_id: zUuid("Equipe"), title: zText(3, 160, "Título"), period_start: zDate("Início"), period_end: zDate("Fim") })
+  .refine((d) => d.period_end >= d.period_start, { path: ["period_end"], message: "Fim deve ser igual ou posterior ao início." });
+
+export const trainingItemSchema = z.object({
+  plan_id: zUuid("Plano"),
+  program_id: zUuid("Programa"),
+  competency_id: zOptUuid("Competência"),
+  objective: zText(3, 500, "Objetivo"),
+  activity: zText(3, 1000, "Atividade"),
+  planned_minutes: zMinutes("Horas previstas (min)"),
+  responsible_person_id: zOptUuid("Responsável"),
+  resource: zOptText(500, "Recurso"),
+  expected_evidence: zOptText(500, "Evidência"),
+  acceptance_criteria: zOptText(1000, "Critério de aceite"),
+  due_date: zDate("Prazo"),
+});
+
+export const itemStatusSchema = z.object({
+  id: zUuid("Item"),
+  plan_id: zUuid("Plano"),
+  status: z.enum(["previsto", "concluido", "cancelado"]),
+  status_note: zOptText(1000, "Justificativa"),
+});
+
+export const planVersionSchema = z.object({ id: zUuid("Plano"), note: zText(3, 2000, "Motivo da alteração") });
+
+export const sessionSchema = z
+  .object({
+    program_id: zUuid("Programa"),
+    team_id: zUuid("Equipe"),
+    training_item_id: zOptUuid("Item do plano"),
+    competency_id: zOptUuid("Competência"),
+    date: zDate("Data"),
+    start_time: zTime("Início"),
+    end_time: zTime("Término"),
+    break_minutes: z.coerce.number().int().min(0).max(600).default(0),
+    location: zOptText(200, "Local"),
+    notes: zOptText(2000, "Observações"),
+  })
+  .refine((d) => d.end_time > d.start_time, { path: ["end_time"], message: "Término deve ser após o início." });
+
+export const attendanceSchema = z
+  .object({
+    session_id: zUuid("Sessão"),
+    program_id: zUuid("Programa"),
+    person_id: zUuid("Pessoa"),
+    status: z.enum(["presente", "parcial", "ausente", "justificada"]),
+    attended_minutes: z.preprocess(emptyToNull, z.coerce.number().int().min(0).max(1000).nullable()),
+    justification: zOptText(1000, "Justificativa"),
+  })
+  .refine((d) => d.status !== "parcial" || (d.attended_minutes !== null && d.attended_minutes > 0), { path: ["attended_minutes"], message: "Informe os minutos presentes." })
+  .refine((d) => d.status !== "justificada" || Boolean(d.justification), { path: ["justification"], message: "Informe a justificativa." });
+
+export const assessmentSchema = z
+  .object({
+    program_id: zUuid("Programa"),
+    team_id: zUuid("Equipe"),
+    occupation_id: zOptUuid("Ocupação"),
+    type: z.enum(["parcial", "completo", "externo", "diagnostico"]),
+    title: zText(3, 160, "Título"),
+    test_version: zOptText(60, "Versão da prova"),
+    criteria_version: zOptText(60, "Versão dos critérios"),
+    held_on: zDate("Data"),
+    scale: z.enum(["worldskills", "percentual", "pontos_brutos"]),
+    scale_max: z.coerce.number().positive("Máximo da escala deve ser positivo.").max(100000),
+    planned_minutes: z.preprocess(emptyToNull, z.coerce.number().int().positive().max(5000).nullable()),
+    actual_minutes: z.preprocess(emptyToNull, z.coerce.number().int().positive().max(5000).nullable()),
+  })
+  .refine((d) => d.scale !== "percentual" || d.scale_max === 100, { path: ["scale_max"], message: "Escala percentual tem máximo 100." });
+
+export const resultSchema = z.object({
+  assessment_id: zUuid("Simulado"),
+  program_id: zUuid("Programa"),
+  person_id: zOptUuid("Pessoa"),
+  criterion: zOptText(160, "Critério"),
+  score: z.coerce.number({ message: "Nota inválida." }).min(0, "Nota não pode ser negativa."),
+});
+
+export const errorSchema = z.object({
+  id: zOptId,
+  assessment_id: zUuid("Simulado"),
+  program_id: zUuid("Programa"),
+  competency_id: zOptUuid("Competência"),
+  description: zText(3, 1000, "Erro"),
+  root_cause: zOptText(1000, "Causa raiz"),
+  corrective_action: zOptText(1000, "Ação corretiva"),
+  owner_person_id: zOptUuid("Responsável"),
+  due_date: zOptDate("Prazo"),
+  status: z.enum(["aberta", "em_andamento", "concluida"]),
+}).refine((d) => d.status !== "concluida" || (d.root_cause && d.corrective_action), { path: ["root_cause"], message: "Para concluir, informe causa raiz e ação corretiva." });
+
+export const scoreTargetSchema = z.object({
+  program_id: zUuid("Programa"),
+  occupation_id: zUuid("Ocupação"),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Mês inválido."),
+  target: z.coerce.number().min(0, "Meta não pode ser negativa.").max(100000),
+  scale: z.enum(["worldskills", "percentual", "pontos_brutos"]),
+  status: z.enum(["proposta", "aprovada"]),
+  source: zText(3, 300, "Fonte/justificativa"),
+});
+
+export const weeklyReportSchema = z.object({
+  id: zOptId,
+  program_id: zUuid("Programa"),
+  team_id: zUuid("Equipe"),
+  week_start: zDate("Semana"),
+  planned_hours: z.coerce.number().min(0).max(2000),
+  actual_hours: z.coerce.number().min(0).max(2000),
+  outcomes: zOptText(4000, "Resultados"),
+  blockers: zOptText(4000, "Dificuldades"),
+  intervention: zOptText(4000, "Intervenção"),
+  next_steps: zOptText(4000, "Próximas entregas"),
+});
+
+export const reportStatusSchema = z.object({
+  id: zUuid("Relatório"),
+  status: z.enum(["enviado", "em_revisao", "aprovado", "devolvido"]),
+  note: zOptText(2000, "Observação"),
+});
+
 export const SCHEMAS = {
   unit: unitSchema,
   competition: competitionSchema,
@@ -286,6 +437,20 @@ export const SCHEMAS = {
   documentMeta: documentMetaSchema,
   invite: inviteSchema,
   membership: membershipSchema,
+  allocation: allocationSchema,
+  competency: competencySchema,
+  trainingPlan: trainingPlanSchema,
+  trainingItem: trainingItemSchema,
+  itemStatus: itemStatusSchema,
+  planVersion: planVersionSchema,
+  session: sessionSchema,
+  attendance: attendanceSchema,
+  assessment: assessmentSchema,
+  result: resultSchema,
+  assessmentError: errorSchema,
+  scoreTarget: scoreTargetSchema,
+  weeklyReport: weeklyReportSchema,
+  reportStatus: reportStatusSchema,
 } as const;
 
 export type SchemaKey = keyof typeof SCHEMAS;

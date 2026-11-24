@@ -15,6 +15,7 @@ import { expandAll } from "@/features/agenda/domain";
 import { STATUS_LABEL, STATUS_ORDER } from "@/features/acoes/domain";
 import { StatusChart } from "@/features/dashboard/components/status-chart";
 import { scoreDeviation } from "@/features/dashboard/domain";
+import { latestComparable, type Scale } from "@/features/worldskills/domain";
 
 export const metadata: Metadata = { title: "Painel" };
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -81,12 +82,22 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       .limit(500),
     supabase
       .from("occupations")
-      .select("id, code, name, target_score, target_source, program_id")
+      .select("id, code, name, target_score, target_source, target_scale, program_id")
       .in("program_id", ids)
       .is("archived_at", null)
       .order("code"),
     loadAgenda(supabase, { programIds: ids, rangeStart: cutoff, rangeEnd }),
   ]);
+  const { data: assessData } = await supabase
+    .from("assessments")
+    .select("id, held_on, type, scale, occupation_id, results:assessment_results(score, person_id, criterion)")
+    .in("program_id", ids)
+    .eq("status", "publicado")
+    .limit(1000);
+  const teamScores = (assessData ?? []).flatMap((a) => {
+    const r = a.results.find((x) => x.person_id === null && x.criterion === null);
+    return r ? [{ id: a.id, held_on: a.held_on, type: a.type, scale: a.scale as Scale, score: Number(r.score), occupation_id: a.occupation_id }] : [];
+  });
   const actions = actionsData ?? [];
   const runs = runsData ?? [];
   const occupations = occData ?? [];
@@ -129,7 +140,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2">
-              <CardHeader title="Metas e desvios" description="Metas por ocupação, com fonte declarada. O desvio exige nota comparável (simulados entram na etapa 2)." />
+              <CardHeader title="Metas e desvios" description="Meta final por ocupação e último simulado publicado na mesma escala (resultado da equipe). Escalas diferentes não são comparadas." />
               <CardBody>
                 {occupations.length === 0 ? (
                   <EmptyState title="Sem metas cadastradas">Nenhuma ocupação com meta nos programas filtrados.</EmptyState>
@@ -140,7 +151,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                     </thead>
                     <tbody>
                       {occupations.map((o) => {
-                        const dev = scoreDeviation(null, o.target_score);
+                        const last = latestComparable(teamScores, o.id, o.target_scale as Scale);
+                        const dev = scoreDeviation(last?.score ?? null, o.target_score !== null ? Number(o.target_score) : null);
                         return (
                           <Tr key={o.id}>
                             <Td className="font-medium">{o.code} — {o.name}</Td>
@@ -148,8 +160,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                             <Td className="text-right" title={o.target_source ?? undefined}>
                               {o.target_score !== null ? Number(o.target_score).toLocaleString("pt-BR") : <span className="text-slate-500">sem meta</span>}
                             </Td>
-                            <Td className="text-right text-slate-500">sem dados</Td>
-                            <Td className="text-right text-slate-500">{dev === null ? "N/A" : dev}</Td>
+                            <Td className="text-right">{last ? <span title={`Simulado de ${formatDate(last.held_on)}`}>{last.score}</span> : <span className="text-slate-500">sem dados</span>}</Td>
+                            <Td className={`text-right ${dev === null ? "text-slate-500" : dev < 0 ? "font-semibold text-red-700" : "font-semibold text-emerald-700"}`}>{dev === null ? "N/A" : dev > 0 ? `+${dev}` : dev}</Td>
                           </Tr>
                         );
                       })}
@@ -233,8 +245,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               </CardBody>
             </Card>
           </div>
-          <Alert tone="info" className="mt-6" title="Indicadores das próximas etapas">
-            CH ≥ 95%, execução do plano, simulados e pontuação conforme rampa (WorldSkills) e bancas/funil (INOVA) serão calculados a partir dos registros das etapas 2 e 3, com denominador, período e fonte explícitos.
+          <Alert tone="info" className="mt-6" title="Mais indicadores">
+            CH, execução do plano e rampa por equipe estão em WorldSkills → Visão geral. Bancas e funil do INOVA chegam na etapa 3.
           </Alert>
         </>
       )}

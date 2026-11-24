@@ -2,8 +2,8 @@
 
 Portal de gestão integrada das competições do SENAI Vitória (Beira-Mar e Porto).
 Documento norteador: [`docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md`](<docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md>) v0.1 (24/11/2026). Plano técnico em
-[`docs/PLANO_IMPLEMENTACAO.md`](docs/PLANO_IMPLEMENTACAO.md); relatório da etapa atual em
-[`docs/ETAPA_1.md`](docs/ETAPA_1.md).
+[`docs/PLANO_IMPLEMENTACAO.md`](docs/PLANO_IMPLEMENTACAO.md); relatórios em
+[`docs/ETAPA_1.md`](docs/ETAPA_1.md) e [`docs/ETAPA_2.md`](docs/ETAPA_2.md).
 
 A estrutura documental de gestão (ciclo 2027–2028: plano diretor, cronograma, planos de
 treinamento, matrizes, atas, benchmarking) está em [`docs/gestao-estrategica/`](docs/gestao-estrategica/README.md).
@@ -82,6 +82,9 @@ npx supabase gen types typescript --local > src/lib/database.types.ts
 Abra `supabase/instalacao/instalacao_completa.sql` no GitHub (botão **Raw**), copie tudo e execute
 **uma única vez** no SQL Editor de um projeto novo. Contém todas as migrations e as referências do PRD,
 numa transação. Para regenerar após novas migrations: `scripts/bundle-sql.sh`.
+
+Projeto já instalado? Aplique só a atualização da etapa: `supabase/instalacao/atualizacao_etapa2.sql`
+(mesmo procedimento). `supabase/instalacao/diagnostico.sql` mostra o que está instalado.
 
 ### Configurações obrigatórias no painel do Supabase (Auth)
 

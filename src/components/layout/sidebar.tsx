@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { NAV } from "./nav";
+import { CURRENT_STAGE, NAV } from "./nav";
 import { cn } from "@/lib/cn";
 
 function Brand() {
@@ -44,7 +44,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   >
                     <Icon className={cn("size-4 shrink-0", active ? "text-accent-400" : "")} aria-hidden />
                     <span className="flex-1">{item.label}</span>
-                    {item.stage > 1 ? (
+                    {item.stage > CURRENT_STAGE ? (
                       <span className="rounded bg-brand-800 px-1.5 text-[10px] font-medium text-brand-200" title={`Prevista na etapa ${item.stage}`}>
                         E{item.stage}
                       </span>

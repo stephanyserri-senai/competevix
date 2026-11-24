@@ -9,4 +9,5 @@ select
   to_regclass('public.checklist_runs') is not null                as checklists_0600,
   to_regclass('public.audit_log') is not null                     as auditoria_0700,
   to_regprocedure('public.link_person_to_user(uuid,text)') is not null as vinculo_0800,
-  exists (select 1 from storage.buckets where id = 'documentos')  as bucket;
+  exists (select 1 from storage.buckets where id = 'documentos')  as bucket,
+  to_regclass('public.training_plans') is not null                as etapa2_worldskills;
