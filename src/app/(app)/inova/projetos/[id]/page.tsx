@@ -11,7 +11,7 @@ import { ArchiveButton } from "@/components/ui/archive-button";
 import { hasRole, requireAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/dates";
-import { addProjectEvidence, advanceStage, saveProject, setProjectArchived } from "@/features/inova/actions";
+import { addProjectEvidence, advanceStage, saveProject, saveProjectResult, setProjectArchived } from "@/features/inova/actions";
 import { EVIDENCE_LABEL, STAGES, STAGE_LABEL, nextStage, type Stage } from "@/features/inova/domain";
 import { DocumentUploader } from "@/features/documentos/uploader";
 import { cn } from "@/lib/cn";
@@ -22,10 +22,11 @@ export default async function ProjetoPage({ params }: PageProps<"/inova/projetos
   const supabase = await createClient();
   const { data: p } = await supabase.from("projects").select("*, team:teams(name)").eq("id", id).maybeSingle();
   if (!p) notFound();
-  const [{ data: evidences }, { data: history }, { data: panels }] = await Promise.all([
+  const [{ data: evidences }, { data: history }, { data: panels }, { data: results }] = await Promise.all([
     supabase.from("project_evidences").select("id, stage, kind, description, url, created_at, document:documents(id, title), author:profiles!project_evidences_created_by_fkey(display_name)").eq("project_id", id).order("created_at", { ascending: false }),
     supabase.from("project_stage_history").select("id, from_stage, to_stage, note, evidence_count, created_at, reviewer:profiles!project_stage_history_reviewer_fkey(display_name)").eq("project_id", id).order("created_at", { ascending: false }),
     supabase.from("panels").select("id, title, held_on, status, version").eq("project_id", id).order("held_on", { ascending: false }),
+    supabase.from("project_results").select("*").eq("project_id", id).order("held_on", { ascending: false }),
   ]);
   const isSup = hasRole(access, p.program_id, "supervisao");
   const canEdit = isSup || hasRole(access, p.program_id, "orientador");
@@ -33,7 +34,6 @@ export default async function ProjetoPage({ params }: PageProps<"/inova/projetos
   const next = nextStage(stage);
   const evCurrent = (evidences ?? []).filter((e) => e.stage === stage).length;
   const idx = STAGES.indexOf(stage);
-  const hasPublishedPanel = (panels ?? []).some((x) => x.status === "publicada");
 
   return (
     <>
@@ -134,7 +134,6 @@ export default async function ProjetoPage({ params }: PageProps<"/inova/projetos
               <CardHeader title="Revisão de etapa (supervisão)" />
               <CardBody className="space-y-3">
                 {next && evCurrent === 0 ? <Alert tone="warning">Registre ao menos uma evidência em “{STAGE_LABEL[stage]}” para avançar.</Alert> : null}
-                {next === "prioritario" && !hasPublishedPanel ? <Alert tone="warning">Priorizar exige banca publicada.</Alert> : null}
                 <ActionForm action={advanceStage} schema="advance" submitLabel="Registrar decisão">
                   <input type="hidden" name="project_id" value={id} />
                   <SelectField name="to_stage" label="Mover para" defaultValue={next ?? ""}>
@@ -147,9 +146,47 @@ export default async function ProjetoPage({ params }: PageProps<"/inova/projetos
             </Card>
           ) : null}
           <Card>
-            <CardHeader title="Bancas" />
+            <CardHeader title="Resultados no evento" description="Avaliação oficial (estadual, nacional). Metas 2027: 1º estadual, top 3 nacional, ≥95/100 e ≥38/40 em inovação." />
+            <CardBody className="space-y-3">
+              {(results ?? []).length === 0 ? <p className="text-sm text-slate-600">Nenhum resultado registrado.</p> : (
+                <ul className="space-y-2 text-sm">{(results ?? []).map((r) => (
+                  <li key={r.id}>
+                    <p className="font-medium">{{ estadual: "Estadual", regional: "Regional", nacional: "Nacional", outro: "Outro" }[r.level]}{r.event_name ? ` — ${r.event_name}` : ""} · {formatDate(r.held_on)}</p>
+                    <p className="text-slate-700">
+                      {r.placement ? <Badge tone={r.placement <= 3 ? "success" : "neutral"}>{r.placement}º lugar</Badge> : null}
+                      {r.total_score !== null ? <span className="ml-1">Nota {Number(r.total_score).toLocaleString("pt-BR")}</span> : null}
+                      {r.innovation_score !== null ? <span className="ml-1">· Inovação {Number(r.innovation_score).toLocaleString("pt-BR")}/40</span> : null}
+                    </p>
+                    {r.notes ? <p className="text-xs text-slate-600">{r.notes}</p> : null}
+                  </li>
+                ))}</ul>
+              )}
+              {canEdit ? (
+                <details>
+                  <summary className="cursor-pointer text-sm font-medium text-brand-700">+ Registrar resultado</summary>
+                  <ActionForm action={saveProjectResult} schema="projectResult" resetOnSuccess submitLabel="Registrar" submitVariant="secondary" className="mt-3 space-y-3">
+                    <input type="hidden" name="project_id" value={id} />
+                    <input type="hidden" name="program_id" value={p.program_id} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <SelectField name="level" label="Etapa" defaultValue="estadual">
+                        <option value="estadual">Estadual</option><option value="regional">Regional</option><option value="nacional">Nacional</option><option value="outro">Outro</option>
+                      </SelectField>
+                      <TextField name="held_on" type="date" label="Data" required />
+                      <TextField name="total_score" type="number" step="0.01" min={0} max={100} label="Nota (0–100)" />
+                      <TextField name="innovation_score" type="number" step="0.01" min={0} max={40} label="Inovação (0–40)" />
+                      <TextField name="placement" type="number" min={1} label="Colocação" />
+                      <TextField name="event_name" label="Evento" />
+                    </div>
+                    <TextareaField name="notes" label="Observações / feedback da banca oficial" />
+                  </ActionForm>
+                </details>
+              ) : null}
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Simulações internas" />
             <CardBody>
-              {(panels ?? []).length === 0 ? <p className="text-sm text-slate-600">Nenhuma banca.</p> : (
+              {(panels ?? []).length === 0 ? <p className="text-sm text-slate-600">Nenhuma simulação.</p> : (
                 <ul className="space-y-1 text-sm">{(panels ?? []).map((x) => (
                   <li key={x.id}><Link href={`/inova/bancas/${x.id}`} className="text-brand-700 hover:underline">{x.title}</Link> <span className="text-xs text-slate-500">{formatDate(x.held_on)} · {x.status}{x.version > 1 ? ` · v${x.version}` : ""}</span></li>
                 ))}</ul>

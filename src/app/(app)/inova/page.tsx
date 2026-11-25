@@ -22,8 +22,8 @@ import { cn } from "@/lib/cn";
 
 export const metadata: Metadata = { title: "INOVA SENAI" };
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
-const TABS = [["funil", "Projetos e funil"], ["bancas", "Bancas"], ["rubricas", "Rubricas"]] as const;
-const PANEL_STATUS = { planejada: "Planejada", publicada: "Publicada", substituida: "Substituída" } as const;
+const TABS = [["funil", "Projetos e funil"], ["bancas", "Simulação interna"], ["rubricas", "Rubricas"]] as const;
+const PANEL_STATUS = { planejada: "Em andamento", publicada: "Concluída", substituida: "Substituída" } as const;
 const RUBRIC_STATUS = { rascunho: "Rascunho", publicada: "Publicada", substituida: "Substituída" } as const;
 
 export default async function InovaPage({ searchParams }: PageProps<"/inova">) {
@@ -35,26 +35,15 @@ export default async function InovaPage({ searchParams }: PageProps<"/inova">) {
   const program = pickProgram(programs, sp.programa) ?? programs[0] ?? null;
   const header = (
     <PageHeader eyebrow="RF08" title="INOVA SENAI"
-      description="Ficha de projeto, funil com evidências, validação industrial, protótipo, modelo de negócio e bancas com rubrica versionada. Avançar de etapa exige evidência e revisão da supervisão." />
+      description="Preparação interna dos projetos: ficha, funil com evidências, simulação com a rubrica e registro dos resultados obtidos no evento. A avaliação oficial acontece no evento; o portal não gerencia bancas nem avaliadores." />
   );
-  const isEvaluator = Object.values(access.roles).some((r) => r.includes("avaliador"));
-  if (!program) {
-    return (
-      <>
-        {header}
-        <EmptyState title="Nenhum programa INOVA no seu escopo"
-          action={isEvaluator ? <Link href="/bancas" className="text-sm font-medium text-brand-700 hover:underline">Ir para Minhas bancas →</Link> : undefined}>
-          {isEvaluator ? "Como avaliador(a), você acessa apenas as bancas para as quais foi designado(a)." : undefined}
-        </EmptyState>
-      </>
-    );
-  }
+  if (!program) return <>{header}<EmptyState title="Nenhum programa INOVA no seu escopo" /></>;
   const tab = (TABS.find(([k]) => k === one(sp.aba))?.[0] ?? "funil") as (typeof TABS)[number][0];
   const isSup = hasRole(access, program.id, "supervisao");
   const canTeam = isSup || hasRole(access, program.id, "orientador");
   const [{ data: teams }, { data: projects }] = await Promise.all([
     supabase.from("teams").select("id, name").eq("program_id", program.id).is("archived_at", null).order("name"),
-    supabase.from("projects").select("id, title, stage, team_id, partner_company, stage_changed_at, archived_at, evidences:project_evidences(kind)").eq("program_id", program.id).order("title"),
+    supabase.from("projects").select("id, title, stage, team_id, partner_company, stage_changed_at, archived_at, evidences:project_evidences(kind), results:project_results(level, total_score, innovation_score, placement, held_on)").eq("program_id", program.id).order("title"),
   ]);
   const active = (projects ?? []).filter((p) => !p.archived_at);
   const link = (k: string) => `/inova?programa=${program.id}&aba=${k}`;
@@ -77,14 +66,19 @@ export default async function InovaPage({ searchParams }: PageProps<"/inova">) {
 
   async function Funil() {
     const ind = inovaIndicators(active.map((p) => ({ id: p.id, stage: p.stage as Stage, evidenceKinds: p.evidences.map((e) => e.kind) })));
+    const LEVEL = { estadual: "Estadual", regional: "Regional", nacional: "Nacional", outro: "Outro" } as const;
+    const results = active.flatMap((p) => p.results.map((r) => ({ level: r.level, total: r.total_score === null ? null : Number(r.total_score), innovation: r.innovation_score === null ? null : Number(r.innovation_score), placement: r.placement, held_on: r.held_on })));
+    const best = results.sort((a, b) => (b.held_on > a.held_on ? 1 : -1))[0] ?? null;
     const teamName = new Map((teams ?? []).map((t) => [t.id, t.name]));
     return (
       <div className="space-y-6">
-        <section aria-label="Indicadores INOVA" className="grid gap-3 sm:grid-cols-3">
+        <section aria-label="Indicadores INOVA" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Kpi label="Projetos ativos" value={active.length ? String(active.length) : "Sem dados"} detail="no funil do programa" />
           <Kpi label="Com protótipo funcional" value={active.length ? String(ind.prototypes) : "Sem dados"} detail="evidência do tipo protótipo funcional" />
           <Kpi label="Prioritários com validação empresarial" value={formatPercent(ind.priorityValidatedPct)}
             detail={ind.priorityCount ? `${ind.priorityCount} prioritário(s) · meta 100%` : "nenhum projeto prioritário (N/A)"} />
+          <Kpi label="Resultados no evento" value={best ? `${best.placement ? `${best.placement}º` : formatScore(best.total)}` : "Sem dados"}
+            detail={best ? `${LEVEL[best.level]} · nota ${formatScore(best.total)} · inovação ${formatScore(best.innovation)} — metas: 1º estadual, top 3 nacional, ≥95 e ≥38/40` : "registre na página do projeto após cada evento"} />
         </section>
         {active.length === 0 ? <EmptyState title="Nenhum projeto visível" /> : (
           <div className="overflow-x-auto pb-2">
@@ -154,9 +148,9 @@ export default async function InovaPage({ searchParams }: PageProps<"/inova">) {
     return (
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          {(panels ?? []).length === 0 ? <EmptyState title="Nenhuma banca registrada" /> : (
-            <Table caption="Bancas">
-              <thead><tr><Th>Banca</Th><Th>Projeto</Th><Th>Data</Th><Th>Situação</Th><Th className="text-right">Resultado</Th></tr></thead>
+          {(panels ?? []).length === 0 ? <EmptyState title="Nenhuma simulação registrada" /> : (
+            <Table caption="Simulações internas">
+              <thead><tr><Th>Simulação</Th><Th>Projeto</Th><Th>Data</Th><Th>Situação</Th><Th className="text-right">Resultado</Th></tr></thead>
               <tbody>
                 {(panels ?? []).map((p) => {
                   let result: ReturnType<typeof panelResult> | null = null;
@@ -178,16 +172,16 @@ export default async function InovaPage({ searchParams }: PageProps<"/inova">) {
               </tbody>
             </Table>
           )}
-          <p className="mt-2 text-xs text-slate-500">Resultado = média das avaliações completas, sem arredondamento antes da classificação (≥95 excelente; 90–&lt;95 muito bom; 80–&lt;90 intermediário; 70–&lt;80 baixo; &lt;70 insuficiente). Metas 2027: ≥95/100 e ≥38/40 em inovação.</p>
+          <p className="mt-2 text-xs text-slate-500">Simulação interna para preparar o pitch: a própria equipe (orientação/supervisão) pontua com a rubrica. Resultado = média das avaliações concluídas, sem arredondamento antes da classificação (≥95 excelente; 90–&lt;95 muito bom; 80–&lt;90 intermediário; 70–&lt;80 baixo; &lt;70 insuficiente). Não substitui a avaliação oficial do evento.</p>
         </div>
-        {isSup && active.length ? (
+        {canTeam && active.length ? (
           <Card>
-            <CardHeader title="Nova banca" description="Depois de criar, designe os avaliadores (vínculo temporário de avaliador)." />
+            <CardHeader title="Nova simulação" description="Você pontua o projeto com a rubrica; outras pessoas da equipe interna podem ser incluídas." />
             <CardBody>
               {(versions ?? []).length === 0 ? <Alert tone="warning">Publique uma rubrica na aba Rubricas.</Alert> : (
-                <ActionForm action={createPanel} schema="panel" submitLabel="Criar banca">
+                <ActionForm action={createPanel} schema="panel" submitLabel="Iniciar simulação">
                   <input type="hidden" name="program_id" value={program!.id} />
-                  <TextField name="title" label="Título" required placeholder="Ex.: Banca mensal — dezembro" />
+                  <TextField name="title" label="Título" required placeholder="Ex.: Simulação de pitch — dezembro" />
                   <SelectField name="project_id" label="Projeto" required defaultValue="">
                     <option value="" disabled>Selecione…</option>
                     {active.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}

@@ -11,4 +11,5 @@ select
   to_regprocedure('public.link_person_to_user(uuid,text)') is not null as vinculo_0800,
   exists (select 1 from storage.buckets where id = 'documentos')  as bucket,
   to_regclass('public.training_plans') is not null                as etapa2_worldskills,
-  to_regclass('public.panels') is not null                        as etapa3_inova;
+  to_regclass('public.panels') is not null                        as etapa3_inova,
+  to_regclass('public.project_results') is not null               as etapa3_ajuste_resultados;

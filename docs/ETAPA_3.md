@@ -1,5 +1,7 @@
 # Etapa 3 — INOVA SENAI · Relatório
 
+> **Ajuste de 25/11/2026 (decisão da supervisão):** no INOVA o portal **não** gerencia bancas nem avaliadores. A avaliação oficial acontece no evento. A rubrica é usada em **simulações internas** (orientação e supervisão pontuam o próprio projeto para preparar o pitch), e os **resultados obtidos no evento** são registrados em cada projeto. “Minhas bancas” saiu do menu, e priorizar um projeto não exige mais banca. O mecanismo de avaliador com acesso restrito continua no banco, sem uso na interface.
+
 Data: 25/11/2026 · Referência: PRD v0.1 §4, §7, §8, §12 (item 3), RF08
 
 ## 1. Funcionalidades implementadas
@@ -9,11 +11,11 @@ Data: 25/11/2026 · Referência: PRD v0.1 §4, §7, §8, §12 (item 3), RF08
 | Ficha de projeto | INOVA → Projetos | Problema, solução, empresa parceira, diferencial técnico, proposta de valor, modelo de negócio; arquivamento |
 | Funil | INOVA → Projetos e funil | Prospecção → seleção → anterioridade → validação do problema → protótipo → validação técnica/financeira → banca/pitch → prioritário (quadro por etapa) |
 | Evidências | Página do projeto | Por tipo (comparação de mercado, diferencial técnico, validação industrial, testes de produtividade/custo/qualidade, viabilidade, modelo de negócio, anterioridade, protótipo funcional), com texto, link ou documento privado; ficam registradas na etapa em que foram anexadas |
-| Revisão de etapa | Página do projeto (supervisão) | Avanço só para a etapa seguinte e com evidência na etapa atual; “prioritário” exige banca publicada; retorno exige justificativa; histórico gravado pelo banco |
+| Revisão de etapa | Página do projeto (supervisão) | Avanço só para a etapa seguinte e com evidência na etapa atual; retorno exige justificativa; histórico gravado pelo banco |
 | Rubricas | INOVA → Rubricas | Versionadas (rascunho → publicada → substituída), dois níveis (grupo e critério), grupo deve somar os critérios; rubrica oficial × interna |
 | Rubrica preliminar | criada automaticamente | Inovação 40 (8 critérios de 0–5), pitch 30, proposta de valor 20, viabilidade/mercado 10 — marcada como **interna / não oficial** |
-| Bancas | INOVA → Bancas / página da banca | Projeto + rubrica publicada; designação de avaliadores; publicação; revisão por nova versão |
-| Avaliadores | Minhas bancas | Vínculo temporário “avaliador” (com fim); veem só a banca e o projeto atribuídos; avaliação independente (sem ver notas alheias); salvar rascunho e enviar |
+| Simulação interna | INOVA → Simulação interna | Quem cria já pontua o projeto com a rubrica publicada; pode incluir outra pessoa da supervisão/orientação; concluir; refazer por nova versão |
+| Resultados no evento | Página do projeto | Etapa (estadual, regional, nacional), data, nota 0–100, inovação 0–40, colocação e feedback da banca oficial; indicador no funil frente às metas 2027 |
 | Resultado | Banca e lista de bancas | Média das avaliações completas, sem arredondar antes da classificação; faixas ≥95 excelente, 90–<95 muito bom, 80–<90 intermediário, 70–<80 baixo, <70 insuficiente; metas 95/100 e 38/40 em inovação |
 | Indicadores | INOVA → Projetos e funil | Projetos por etapa; com protótipo funcional; % de prioritários com validação empresarial (meta 100%) |
 | Ciclo | banco | “2027” renomeado para **2027–2028** (mesmos programas) |
@@ -48,9 +50,8 @@ Corrigido nesta rodada: um teste de alertas usava a data UTC do servidor e falha
 
 ## 4. Como aplicar no Supabase
 
-Cole `supabase/instalacao/atualizacao_etapa3.sql` (Raw no GitHub) no SQL Editor e clique em **Run** uma vez. Depois, `diagnostico.sql` deve mostrar a coluna `etapa3_inova` = **true**.
+Rode `diagnostico.sql` e veja a coluna `etapa3_inova`:
+- **false** → cole `supabase/instalacao/atualizacao_etapa3.sql` (já inclui o ajuste);
+- **true** → cole apenas `supabase/instalacao/atualizacao_etapa3_ajuste.sql`.
 
-Para usar:
-1. Cadastre equipes no programa INOVA e crie os projetos.
-2. Para cada avaliador, crie um vínculo **avaliador** com data de fim, pela importação em massa ou em Configurações.
-3. Crie a banca e designe os avaliadores.
+No fim, `etapa3_ajuste_resultados` deve ser **true**.

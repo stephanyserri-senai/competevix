@@ -459,6 +459,20 @@ export const criterionSchema = z.object({
   position: z.coerce.number().int().min(0).max(100).default(0),
 });
 
+export const projectResultSchema = z
+  .object({
+    project_id: zUuid("Projeto"),
+    program_id: zUuid("Programa"),
+    level: z.enum(["estadual", "regional", "nacional", "outro"]),
+    event_name: zOptText(160, "Evento"),
+    held_on: zDate("Data"),
+    total_score: z.preprocess(emptyToNull, z.coerce.number().min(0, "Nota entre 0 e 100.").max(100, "Nota entre 0 e 100.").nullable()),
+    innovation_score: z.preprocess(emptyToNull, z.coerce.number().min(0, "Inovação entre 0 e 40.").max(40, "Inovação entre 0 e 40.").nullable()),
+    placement: z.preprocess(emptyToNull, z.coerce.number().int().min(1, "Colocação a partir de 1.").nullable()),
+    notes: zOptText(2000, "Observações"),
+  })
+  .refine((d) => d.total_score !== null || d.placement !== null, { path: ["total_score"], message: "Informe a nota ou a colocação." });
+
 export const SCHEMAS = {
   unit: unitSchema,
   competition: competitionSchema,
@@ -507,6 +521,7 @@ export const SCHEMAS = {
   assignment: assignmentSchema,
   revise: reviseSchema,
   criterion: criterionSchema,
+  projectResult: projectResultSchema,
 } as const;
 
 export type SchemaKey = keyof typeof SCHEMAS;

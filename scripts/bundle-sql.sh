@@ -46,3 +46,16 @@ echo "Gerado: $dir/atualizacao_etapa2.sql"
   echo; echo "commit;"
 } > "$dir/atualizacao_etapa3.sql"
 echo "Gerado: $dir/atualizacao_etapa3.sql"
+
+# Ajuste da Etapa 3 (INOVA sem bancas/avaliadores; resultado no evento) — para quem JÁ aplicou a Etapa 3
+{
+  header "AJUSTE — ETAPA 3 (INOVA: simulação interna e resultados no evento)" "Execute UMA ÚNICA VEZ somente se a Etapa 3 JÁ estiver instalada (diagnóstico: etapa3_inova = true)."
+  echo "begin;"
+  echo "do \$\$ begin"
+  echo "  if to_regclass('public.projects') is null then raise exception 'Etapa 3 não instalada: use atualizacao_etapa3.sql (já contém este ajuste).'; end if;"
+  echo "  if to_regclass('public.project_results') is not null then raise exception 'Ajuste da Etapa 3 já aplicado: nada a fazer.'; end if;"
+  echo "end \$\$;"
+  for f in supabase/migrations/20261126000200*.sql; do echo; echo "-- >>>>> $f"; cat "$f"; done
+  echo; echo "commit;"
+} > "$dir/atualizacao_etapa3_ajuste.sql"
+echo "Gerado: $dir/atualizacao_etapa3_ajuste.sql"

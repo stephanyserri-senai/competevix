@@ -134,7 +134,7 @@ describe.skipIf(!hasDb)("Etapa 3 — INOVA", () => {
       otherProject = await newProject(supI, TI2);
       panel = await as(c, supI, async () => (await one(sql<{ id: string }>(c, "insert into panels (program_id, project_id, rubric_version_id, title, held_on) values ($1, $2, $3, 'Banca dez', '2026-12-15') returning id", [P(), project, rubricVersion]))).id);
       const e = await expectError(as(c, supI, () => sql(c, "insert into panel_assignments (panel_id, program_id, evaluator_id) values ($1, $2, $3)", [panel, P(), avOutro])));
-      expect(e).toMatch(/vínculo de avaliador/);
+      expect(e).toMatch(/vínculo vigente/);
       a1 = await as(c, supI, async () => (await one(sql<{ id: string }>(c, "insert into panel_assignments (panel_id, program_id, evaluator_id) values ($1, $2, $3) returning id", [panel, P(), av1]))).id);
       a2 = await as(c, supI, async () => (await one(sql<{ id: string }>(c, "insert into panel_assignments (panel_id, program_id, evaluator_id) values ($1, $2, $3) returning id", [panel, P(), av2]))).id);
 
@@ -176,7 +176,7 @@ describe.skipIf(!hasDb)("Etapa 3 — INOVA", () => {
       // orientador não vê notas antes da publicação
       expect(await as(c, orientI, () => sql(c, "select * from panel_scores"))).toHaveLength(0);
       const incomplete = await expectError(as(c, supI, () => sql(c, "select * from publish_panel($1)", [panel])));
-      expect(incomplete).toMatch(/pendentes/);
+      expect(incomplete).toMatch(/não concluídas/);
       // remove a designação pendente e publica
       await as(c, supI, () => sql(c, "delete from panel_assignments where id = $1", [a2]));
       await as(c, supI, () => sql(c, "select * from publish_panel($1)", [panel]));
@@ -185,11 +185,9 @@ describe.skipIf(!hasDb)("Etapa 3 — INOVA", () => {
       expect((await as(c, orientI, () => sql(c, "select * from panel_scores"))).length).toBe(3);
     });
 
-    it("revisão cria nova versão com os mesmos avaliadores; prioritário exige banca publicada", async () => {
+    it("revisão cria nova versão; priorizar só exige evidência e revisão da supervisão", async () => {
       const [v2] = await as(c, supI, () => sql<{ id: string; version: number; supersedes_id: string }>(c, "select * from revise_panel($1, 'Nota de pitch contestada')", [panel]));
       expect(v2).toMatchObject({ version: 2, supersedes_id: panel });
-      const [{ n }] = await sql<{ n: number }>(c, "select count(*)::int n from panel_assignments where panel_id = $1 and status = 'pendente'", [v2.id]);
-      expect(n).toBe(1);
       const [{ status }] = await sql<{ status: string }>(c, "select status from panels where id = $1", [panel]);
       expect(status).toBe("substituida");
 
@@ -201,14 +199,43 @@ describe.skipIf(!hasDb)("Etapa 3 — INOVA", () => {
         await as(c, supI, () => sql(c, "select * from advance_project_stage($1, $2)", [p, st]));
       }
       await as(c, supI, () => evidence(supI, p, "validacao_industrial"));
-      const noPanel = await expectError(as(c, supI, () => sql(c, "select * from advance_project_stage($1, 'prioritario')", [p])));
-      expect(noPanel).toMatch(/banca publicada/);
+      // decisão 25/11: priorizar não depende de banca no portal (avaliação oficial é no evento)
+      const [row] = await as(c, supI, () => sql<{ stage: string }>(c, "select * from advance_project_stage($1, 'prioritario', 'aprovado internamente')", [p]));
+      expect(row.stage).toBe("prioritario");
     });
 
     it("vínculo de avaliador vencido ou revogado encerra o acesso", async () => {
       await sql(c, "update memberships set revoked_at = now() where user_id = $1", [av1]);
       expect(await as(c, av1, () => sql(c, "select id from panels"))).toHaveLength(0);
       expect(await as(c, av1, () => sql(c, "select id from projects"))).toHaveLength(0);
+    });
+  });
+
+  describe("simulação interna e resultado no evento (decisão 25/11)", () => {
+    it("orientador simula a avaliação do próprio projeto sem avaliador externo", async () => {
+      const p = await newProject(orientI);
+      const other = await newProject(supI, TI2);
+      const sim = await as(c, orientI, async () => (await one(sql<{ id: string }>(c, "insert into panels (program_id, project_id, rubric_version_id, title, held_on) values ($1, $2, $3, 'Simulação interna', '2026-12-10') returning id", [P(), p, rubricVersion]))).id);
+      const e = await expectError(as(c, orientI, () => sql(c, "insert into panels (program_id, project_id, rubric_version_id, title, held_on) values ($1, $2, $3, 'Outra equipe', '2026-12-10')", [P(), other, rubricVersion])));
+      expect(e).toMatch(/row-level/);
+      const a = await as(c, orientI, async () => (await one(sql<{ id: string }>(c, "insert into panel_assignments (panel_id, program_id, evaluator_id) values ($1, $2, $3) returning id", [sim, P(), orientI]))).id);
+      const comp = await expectError(as(c, orientI, () => sql(c, "insert into panel_assignments (panel_id, program_id, evaluator_id) values ($1, $2, $3)", [sim, P(), compI])));
+      expect(comp).toMatch(/vínculo vigente/);
+      await as(c, orientI, () => sql(c, "insert into panel_scores (assignment_id, program_id, criterion_id, score) select $1, $2, id, 1 from rubric_criteria c where version_id = $3 and not exists (select 1 from rubric_criteria k where k.parent_id = c.id)", [a, P(), rubricVersion]));
+      await as(c, orientI, () => sql(c, "select * from submit_panel_evaluation($1)", [a]));
+      await as(c, orientI, () => sql(c, "select * from publish_panel($1)", [sim]));
+      expect((await as(c, compI, () => sql(c, "select * from panel_scores where assignment_id = $1", [a]))).length).toBe(3);
+    });
+
+    it("resultado oficial do evento: equipe registra e lê; limites de nota; outra equipe não vê", async () => {
+      const p = await newProject(orientI);
+      await as(c, orientI, () => sql(c, "insert into project_results (project_id, program_id, level, held_on, total_score, innovation_score, placement) values ($1, $2, 'estadual', '2027-10-20', 96.5, 38.5, 1)", [p, P()]));
+      const over = await expectError(as(c, orientI, () => sql(c, "insert into project_results (project_id, program_id, level, held_on, total_score) values ($1, $2, 'nacional', '2027-11-20', 101)", [p, P()])));
+      expect(over).toMatch(/total_score_check/);
+      const empty = await expectError(as(c, orientI, () => sql(c, "insert into project_results (project_id, program_id, level, held_on) values ($1, $2, 'nacional', '2027-11-20')", [p, P()])));
+      expect(empty).toMatch(/project_results_content_ck/);
+      expect(await as(c, compI, () => sql(c, "select id from project_results where project_id = $1", [p]))).toHaveLength(1);
+      expect(await as(c, s.users.comp2, () => sql(c, "select id from project_results where project_id = $1", [p]))).toHaveLength(0);
     });
   });
 });

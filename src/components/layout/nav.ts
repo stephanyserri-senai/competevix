@@ -1,6 +1,6 @@
 import {
   BarChart3, Building2, CalendarDays, ClipboardCheck, FileText, FolderKanban, Gauge, Lightbulb,
-  ListChecks, PiggyBank, Gavel, Settings, ShieldAlert, Trophy, Users, Wrench, Telescope, NotebookPen,
+  ListChecks, PiggyBank, Settings, ShieldAlert, Trophy, Users, Wrench, Telescope, NotebookPen,
 } from "lucide-react";
 
 export type NavItem = {
@@ -31,7 +31,6 @@ export const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/acompanhamentos", label: "Acompanhamentos", icon: NotebookPen, stage: 2, rf: "RF06" },
       { href: "/worldskills", label: "WorldSkills", icon: ClipboardCheck, stage: 2, rf: "RF07" },
       { href: "/inova", label: "INOVA SENAI", icon: Lightbulb, stage: 3, rf: "RF08" },
-      { href: "/bancas", label: "Minhas bancas", icon: Gavel, stage: 3 },
     ],
   },
   {

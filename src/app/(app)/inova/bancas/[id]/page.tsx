@@ -27,6 +27,8 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
   ]);
   const criteria = (crit ?? []).map((c) => ({ ...c, max_score: Number(c.max_score) })) as (Criterion & { description: string | null })[];
   const isSup = hasRole(access, panel.program_id, "supervisao");
+  const { data: canManageRow } = await supabase.from("projects").select("team_id").eq("id", panel.project_id).single();
+  const canManage = isSup || (hasRole(access, panel.program_id, "orientador") && Boolean(canManageRow));
   const mine = (assigns ?? []).find((a) => a.evaluator_id === access.userId);
   const planned = panel.status === "planejada";
   const bands = bandsFrom(version?.settings);
@@ -36,20 +38,20 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
 
   // Candidatos: usuários com vínculo de avaliador vigente no programa (supervisão enxerga os vínculos do programa)
   const { data: candidates } = isSup && planned
-    ? await supabase.from("memberships").select("user_id, valid_to, profile:profiles!memberships_user_id_fkey(display_name)").eq("program_id", panel.program_id).eq("role", "avaliador").is("revoked_at", null)
+    ? await supabase.from("memberships").select("user_id, valid_to, profile:profiles!memberships_user_id_fkey(display_name)").eq("program_id", panel.program_id).in("role", ["supervisao", "orientador"]).is("revoked_at", null)
     : { data: [] };
   const assigned = new Set((assigns ?? []).map((a) => a.evaluator_id));
 
   return (
     <>
       <PageHeader
-        eyebrow={`Banca${panel.version > 1 ? ` · v${panel.version}` : ""} · ${version?.rubric?.name} v${version?.version}${version?.rubric?.official ? "" : " (interna)"}`}
+        eyebrow={`Simulação interna${panel.version > 1 ? ` · v${panel.version}` : ""} · ${version?.rubric?.name} v${version?.version}${version?.rubric?.official ? "" : " (interna)"}`}
         title={panel.title}
-        description={`${panel.project?.title} · ${formatDate(panel.held_on)} · ${panel.status === "planejada" ? "Planejada" : panel.status === "publicada" ? `Publicada em ${formatDateTime(panel.published_at)}` : "Substituída"}`}
+        description={`${panel.project?.title} · ${formatDate(panel.held_on)} · ${panel.status === "planejada" ? "Em andamento" : panel.status === "publicada" ? `Concluída em ${formatDateTime(panel.published_at)}` : "Substituída"} · não substitui a avaliação oficial do evento`}
         actions={
           <>
-            {isSup ? <Link href={`/inova?programa=${panel.program_id}&aba=bancas`} className="text-sm text-brand-700 hover:underline">← Bancas</Link> : <Link href="/bancas" className="text-sm text-brand-700 hover:underline">← Minhas bancas</Link>}
-            {isSup && planned ? <RunButton variant="primary" label="Publicar resultado" onRun={publishPanel.bind(null, id)} confirm="Publicar? Exige todas as avaliações enviadas; depois fica imutável." /> : null}
+            <Link href={`/inova?programa=${panel.program_id}&aba=bancas`} className="text-sm text-brand-700 hover:underline">← Simulações</Link>
+            {canManage && planned ? <RunButton variant="primary" label="Concluir simulação" onRun={publishPanel.bind(null, id)} confirm="Concluir? Exige todas as avaliações concluídas; depois fica imutável." /> : null}
           </>
         }
       />
@@ -58,10 +60,10 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
 
       {mine && planned ? (
         <Card className="mb-6">
-          <CardHeader title="Sua avaliação" description={mine.status === "submetida" ? `Enviada em ${formatDateTime(mine.submitted_at)} — imutável.` : "Pontue todos os critérios. Você pode salvar e continuar depois; após enviar, não é possível alterar."} />
+          <CardHeader title="Sua pontuação" description={mine.status === "submetida" ? `Concluída em ${formatDateTime(mine.submitted_at)} — imutável.` : "Pontue todos os critérios. Você pode salvar e continuar depois; após concluir, não é possível alterar."} />
           <CardBody>
             {mine.status === "submetida" ? (
-              <p className="text-sm">Total enviado: <strong>{formatScore(evaluationBreakdown(criteria, evals.find((e) => e.assignment_id === mine.id)!).total)}</strong></p>
+              <p className="text-sm">Total registrado: <strong>{formatScore(evaluationBreakdown(criteria, evals.find((e) => e.assignment_id === mine.id)!).total)}</strong></p>
             ) : (
               <ActionForm action={saveScores} hideSubmit className="space-y-4">
                 <input type="hidden" name="assignment_id" value={mine.id} />
@@ -94,7 +96,7 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
                   <textarea name="general_comment" className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm" rows={3} /></label>
                 <div className="flex flex-wrap gap-2">
                   <button type="submit" name="acao" value="salvar" className="h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium hover:bg-slate-50">Salvar rascunho</button>
-                  <button type="submit" name="acao" value="enviar" className="h-10 rounded-md bg-accent-600 px-4 text-sm font-medium text-white hover:bg-accent-700">Salvar e enviar</button>
+                  <button type="submit" name="acao" value="enviar" className="h-10 rounded-md bg-accent-600 px-4 text-sm font-medium text-white hover:bg-accent-700">Salvar e concluir</button>
                 </div>
               </ActionForm>
             )}
@@ -104,12 +106,12 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {isSup || panel.status !== "planejada" ? (
+          {canManage || panel.status !== "planejada" ? (
             <Card>
               <CardHeader title="Resultado consolidado"
-                description={`Média de ${result.count} avaliação(ões) completa(s)${result.excluded ? `; ${result.excluded} não entram (pendentes/incompletas)` : ""}. Sem arredondamento antes da classificação.`} />
+                description={`Média de ${result.count} pontuação(ões) concluída(s)${result.excluded ? `; ${result.excluded} não entram (em andamento)` : ""}. Sem arredondamento antes da classificação.`} />
               <CardBody>
-                {result.total === null ? <EmptyState title="Sem avaliação completa">Nenhuma avaliação enviada e completa até agora.</EmptyState> : (
+                {result.total === null ? <EmptyState title="Sem pontuação concluída">Conclua a pontuação para ver o resultado.</EmptyState> : (
                   <>
                     <p className="mb-3 text-lg">Total <strong className="text-2xl text-brand-900">{formatScore(result.total)}</strong> / {formatScore(topLevel(criteria).reduce((s, t) => s + t.max_score, 0))} · <Badge tone={result.total >= 90 ? "success" : result.total >= 80 ? "info" : "warning"}>{result.classification}</Badge>
                       {meta?.meta_total ? <span className="ml-2 text-sm text-slate-600">meta ≥ {meta.meta_total}</span> : null}</p>
@@ -125,21 +127,21 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
               </CardBody>
             </Card>
           ) : null}
-          {isSup || panel.status !== "planejada" ? (
+          {canManage || panel.status !== "planejada" ? (
             <Card>
-              <CardHeader title="Avaliações" />
+              <CardHeader title="Quem pontuou" />
               <CardBody>
-                {(assigns ?? []).length === 0 ? <p className="text-sm text-slate-600">Nenhum avaliador designado.</p> : (
-                  <Table caption="Avaliadores">
-                    <thead><tr><Th>Avaliador(a)</Th><Th>Situação</Th><Th className="text-right">Total</Th>{isSup && planned ? <Th><span className="sr-only">Ações</span></Th> : null}</tr></thead>
+                {(assigns ?? []).length === 0 ? <p className="text-sm text-slate-600">Ninguém incluído.</p> : (
+                  <Table caption="Pontuações">
+                    <thead><tr><Th>Pessoa</Th><Th>Situação</Th><Th className="text-right">Total</Th>{canManage && planned ? <Th><span className="sr-only">Ações</span></Th> : null}</tr></thead>
                     <tbody>{(assigns ?? []).map((a) => {
                       const b = evaluationBreakdown(criteria, evals.find((e) => e.assignment_id === a.id)!);
                       return (
                         <Tr key={a.id}>
-                          <Td>{a.evaluator?.display_name ?? "Avaliador(a)"}{a.general_comment ? <p className="text-xs text-slate-600">{a.general_comment}</p> : null}</Td>
-                          <Td><Badge tone={a.status === "submetida" ? "success" : "warning"}>{a.status === "submetida" ? "Enviada" : `Pendente (${a.scores.length}/${leaves(criteria).length})`}</Badge></Td>
+                          <Td>{a.evaluator?.display_name ?? "Pessoa"}{a.general_comment ? <p className="text-xs text-slate-600">{a.general_comment}</p> : null}</Td>
+                          <Td><Badge tone={a.status === "submetida" ? "success" : "warning"}>{a.status === "submetida" ? "Concluída" : `Em andamento (${a.scores.length}/${leaves(criteria).length})`}</Badge></Td>
                           <Td className="text-right">{a.status === "submetida" ? formatScore(b.total) : "—"}</Td>
-                          {isSup && planned ? <Td>{a.status === "pendente" ? <RunButton label="Remover" onRun={removeAssignment.bind(null, id, a.id)} confirm="Remover este avaliador da banca?" /> : null}</Td> : null}
+                          {canManage && planned ? <Td>{a.status === "pendente" ? <RunButton label="Remover" onRun={removeAssignment.bind(null, id, a.id)} confirm="Remover esta pessoa da simulação?" /> : null}</Td> : null}
                         </Tr>
                       );
                     })}</tbody>
@@ -152,13 +154,13 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
         <div className="space-y-6">
           {isSup && planned ? (
             <Card>
-              <CardHeader title="Designar avaliador" description="Requer vínculo de avaliador vigente neste programa (crie/importe em Configurações, com data de fim)." />
+              <CardHeader title="Incluir pessoa da equipe interna" description="Opcional: outra pessoa da supervisão ou orientação também pontua; o resultado é a média." />
               <CardBody>
-                {(candidates ?? []).filter((c) => !assigned.has(c.user_id)).length === 0 ? <p className="text-sm text-slate-600">Nenhum avaliador disponível.</p> : (
-                  <ActionForm action={addAssignment} schema="assignment" submitLabel="Designar" submitVariant="secondary">
+                {(candidates ?? []).filter((c) => !assigned.has(c.user_id)).length === 0 ? <p className="text-sm text-slate-600">Ninguém mais disponível.</p> : (
+                  <ActionForm action={addAssignment} schema="assignment" submitLabel="Incluir" submitVariant="secondary">
                     <input type="hidden" name="panel_id" value={id} />
                     <input type="hidden" name="program_id" value={panel.program_id} />
-                    <SelectField name="evaluator_id" label="Avaliador(a)" defaultValue="">
+                    <SelectField name="evaluator_id" label="Pessoa" defaultValue="">
                       <option value="" disabled>Selecione…</option>
                       {(candidates ?? []).filter((c) => !assigned.has(c.user_id)).map((c) => <option key={c.user_id} value={c.user_id}>{c.profile?.display_name ?? "Usuário"}{c.valid_to ? ` (até ${formatDate(c.valid_to)})` : ""}</option>)}
                     </SelectField>
@@ -167,9 +169,9 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
               </CardBody>
             </Card>
           ) : null}
-          {isSup && panel.status === "publicada" ? (
+          {canManage && panel.status === "publicada" ? (
             <Card>
-              <CardHeader title="Revisar banca" description="Cria nova versão planejada com os mesmos avaliadores; a publicada fica no histórico." />
+              <CardHeader title="Refazer simulação" description="Cria nova versão em andamento; a concluída fica no histórico. Inclua quem vai pontuar." />
               <CardBody>
                 <ActionForm action={revisePanel} schema="revise" submitLabel="Criar revisão" submitVariant="secondary">
                   <input type="hidden" name="id" value={id} />
@@ -179,7 +181,7 @@ export default async function BancaPage({ params }: PageProps<"/inova/bancas/[id
             </Card>
           ) : null}
           <Card>
-            <CardHeader title="Projeto avaliado" />
+            <CardHeader title="Projeto" />
             <CardBody>
               <dl className="space-y-2 text-sm">
                 {[["Problema", panel.project?.problem], ["Solução", panel.project?.solution], ["Diferencial", panel.project?.differential], ["Proposta de valor", panel.project?.value_proposition], ["Modelo de negócio", panel.project?.business_model], ["Empresa", panel.project?.partner_company]].map(([l, v]) => (

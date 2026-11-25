@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { dbFailure, invalid, parseForm, success, type FormState } from "@/lib/forms";
 import {
-  advanceSchema, assignmentSchema, criterionSchema, panelSchema, projectEvidenceSchema, projectSchema, reviseSchema,
+  advanceSchema, assignmentSchema, criterionSchema, panelSchema, projectEvidenceSchema, projectResultSchema, projectSchema, reviseSchema,
 } from "@/features/schemas";
 
 export async function saveProject(_: FormState, fd: FormData): Promise<FormState> {
@@ -67,7 +67,21 @@ export async function createPanel(_: FormState, fd: FormData): Promise<FormState
   const supabase = await createClient();
   const { data, error } = await supabase.from("panels").insert(p.data).select("id").single();
   if (error) return dbFailure(error);
+  // Simulação interna: quem cria já pontua (sem avaliador externo — decisão 25/11/2026)
+  const { data: claims } = await supabase.auth.getClaims();
+  await supabase.from("panel_assignments").insert({ panel_id: data.id, program_id: p.data.program_id, evaluator_id: claims?.claims?.sub as string });
   redirect(`/inova/bancas/${data.id}`);
+}
+
+export async function saveProjectResult(_: FormState, fd: FormData): Promise<FormState> {
+  const p = parseForm(projectResultSchema, fd);
+  if (!p.success) return invalid(p.error);
+  const supabase = await createClient();
+  const { error } = await supabase.from("project_results").insert(p.data).select("id").single();
+  if (error) return dbFailure(error);
+  revalidatePath(`/inova/projetos/${p.data.project_id}`);
+  revalidatePath("/inova");
+  return success("Resultado do evento registrado.");
 }
 
 export async function addAssignment(_: FormState, fd: FormData): Promise<FormState> {
@@ -77,7 +91,7 @@ export async function addAssignment(_: FormState, fd: FormData): Promise<FormSta
   const { error } = await supabase.from("panel_assignments").insert(p.data).select("id").single();
   if (error) return dbFailure(error);
   revalidatePath(`/inova/bancas/${p.data.panel_id}`);
-  return success("Avaliador designado.");
+  return success("Pessoa incluída na simulação.");
 }
 
 export async function removeAssignment(panelId: string, assignmentId: string): Promise<FormState> {
@@ -93,7 +107,7 @@ export async function publishPanel(panelId: string): Promise<FormState> {
   const { error } = await supabase.rpc("publish_panel", { p_panel: panelId });
   if (error) return dbFailure(error);
   revalidatePath(`/inova/bancas/${panelId}`);
-  return success("Banca publicada; avaliações congeladas.");
+  return success("Simulação concluída; notas congeladas.");
 }
 
 export async function revisePanel(_: FormState, fd: FormData): Promise<FormState> {
@@ -134,10 +148,10 @@ export async function saveScores(_: FormState, fd: FormData): Promise<FormState>
     const { error } = await supabase.rpc("submit_panel_evaluation", { p_assignment: assignment.data, p_comment: String(fd.get("general_comment") ?? "") || undefined });
     if (error) return dbFailure(error);
     revalidatePath(`/inova/bancas/${panel.data}`);
-    return success("Avaliação enviada. As notas agora estão congeladas.");
+    return success("Avaliação concluída. As notas agora estão congeladas.");
   }
   revalidatePath(`/inova/bancas/${panel.data}`);
-  return success(`${rows.length} nota(s) salva(s). Envie quando todos os critérios estiverem pontuados.`);
+  return success(`${rows.length} nota(s) salva(s). Conclua quando todos os critérios estiverem pontuados.`);
 }
 
 export async function addCriterion(_: FormState, fd: FormData): Promise<FormState> {

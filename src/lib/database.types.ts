@@ -2051,6 +2051,79 @@ export type Database = {
           },
         ];
       };
+      project_results: {
+        Row: {
+          id: string;
+          project_id: string;
+          program_id: string;
+          level: Database["public"]["Enums"]["event_level"];
+          event_name: string | null;
+          held_on: string;
+          total_score: number | null;
+          innovation_score: number | null;
+          placement: number | null;
+          notes: string | null;
+          document_id: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          program_id: string;
+          level: Database["public"]["Enums"]["event_level"];
+          event_name?: string | null;
+          held_on: string;
+          total_score?: number | null;
+          innovation_score?: number | null;
+          placement?: number | null;
+          notes?: string | null;
+          document_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          program_id?: string;
+          level?: Database["public"]["Enums"]["event_level"];
+          event_name?: string | null;
+          held_on?: string;
+          total_score?: number | null;
+          innovation_score?: number | null;
+          placement?: number | null;
+          notes?: string | null;
+          document_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_results_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "project_results_document_fk";
+            columns: ["document_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "project_results_project_fk";
+            columns: ["project_id", "program_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id", "program_id"];
+          },
+        ];
+      };
       project_stage_history: {
         Row: {
           id: number;
@@ -3099,6 +3172,7 @@ export type Database = {
       document_classification: "interno" | "restrito" | "confidencial";
       error_action_status: "aberta" | "em_andamento" | "concluida";
       event_exception_kind: "cancelada" | "alterada";
+      event_level: "estadual" | "regional" | "nacional" | "outro";
       event_type: "treino" | "reuniao" | "simulado" | "banca" | "visita" | "competicao" | "prazo" | "outro";
       membership_role: "supervisao" | "orientador" | "competidor" | "gestao" | "avaliador" | "napi";
       panel_status: "planejada" | "publicada" | "substituida";
@@ -3147,6 +3221,7 @@ export const Constants = {
       document_classification: ["interno", "restrito", "confidencial"],
       error_action_status: ["aberta", "em_andamento", "concluida"],
       event_exception_kind: ["cancelada", "alterada"],
+      event_level: ["estadual", "regional", "nacional", "outro"],
       event_type: ["treino", "reuniao", "simulado", "banca", "visita", "competicao", "prazo", "outro"],
       membership_role: ["supervisao", "orientador", "competidor", "gestao", "avaliador", "napi"],
       panel_status: ["planejada", "publicada", "substituida"],

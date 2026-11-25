@@ -1,5 +1,6 @@
 -- =============================================================================
--- COMPETE VIX — DESFAZER INSTALAÇÃO (use só se o diagnóstico mostrar instalação PARCIAL)
+-- COMPETE VIX — DESFAZER INSTALAÇÃO PARCIAL DA ETAPA 1 (use só se o diagnóstico mostrar a Etapa 1 incompleta;
+-- não remove objetos das Etapas 2 e 3)
 -- Remove APENAS os objetos criados pelo portal no esquema public/private.
 -- APAGA OS DADOS DO PORTAL. Não toca em usuários do Auth nem no bucket "documentos".
 -- Depois rode novamente instalacao_completa.sql.
