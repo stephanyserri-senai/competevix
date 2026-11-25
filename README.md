@@ -1,9 +1,14 @@
 # COMPETE VIX
 
 Portal de gestão integrada das competições do SENAI Vitória (Beira-Mar e Porto).
-Documento norteador: [`docs/COMPETE_VIX_PRD.md`](docs/COMPETE_VIX_PRD.md) v0.1 (24/11/2026). Plano técnico em
-[`docs/PLANO_IMPLEMENTACAO.md`](docs/PLANO_IMPLEMENTACAO.md); relatório da etapa atual em
-[`docs/ETAPA_1.md`](docs/ETAPA_1.md).
+Documento norteador: [`docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md`](<docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md>) v0.1 (24/11/2026). Plano técnico em
+[`docs/PLANO_IMPLEMENTACAO.md`](docs/PLANO_IMPLEMENTACAO.md); relatórios em
+[`docs/ETAPA_1.md`](docs/ETAPA_1.md), [`docs/ETAPA_2.md`](docs/ETAPA_2.md), [`docs/ETAPA_3.md`](docs/ETAPA_3.md) e [`docs/ETAPA_4.md`](docs/ETAPA_4.md).
+
+A estrutura documental de gestão (ciclo 2027–2028: plano diretor, cronograma, planos de
+treinamento, matrizes, atas, benchmarking) está em [`docs/gestao-estrategica/`](docs/gestao-estrategica/README.md).
+Esses modelos são preliminares; o portal é a fonte operacional e a correspondência entre
+documentos e módulos está em [`docs/gestao-estrategica/MAPEAMENTO_PORTAL.md`](docs/gestao-estrategica/MAPEAMENTO_PORTAL.md).
 
 > Nome, arquitetura e regras operacionais são **propostas** (PRD §1). Não publicar sem
 > aprovação institucional de hospedagem e tratamento de dados (PRD §10).
@@ -71,6 +76,15 @@ npx supabase gen types typescript --local > src/lib/database.types.ts
 1. Crie um projeto **de desenvolvimento** (sem dados reais).
 2. Aplique as migrations em ordem: `npx supabase link --project-ref <ref>` e `npx supabase db push`.
 3. Aplique `supabase/seed/references.sql`. O `demo.sql` é opcional e **somente** para desenvolvimento.
+
+### Opção C — sem terminal (SQL Editor)
+
+Abra `supabase/instalacao/instalacao_completa.sql` no GitHub (botão **Raw**), copie tudo e execute
+**uma única vez** no SQL Editor de um projeto novo. Contém todas as migrations e as referências do PRD,
+numa transação. Para regenerar após novas migrations: `scripts/bundle-sql.sh`.
+
+Projeto já instalado? Aplique, em ordem, só as atualizações que faltam: `supabase/instalacao/atualizacao_etapa2.sql`, `atualizacao_etapa3.sql` (ou `atualizacao_etapa3_ajuste.sql`), `atualizacao_etapa4.sql`, `atualizacao_etapa4_1.sql`, `atualizacao_etapa4_2.sql`, `atualizacao_etapa4_3.sql`
+(mesmo procedimento). `supabase/instalacao/diagnostico.sql` mostra o que está instalado.
 
 ### Configurações obrigatórias no painel do Supabase (Auth)
 

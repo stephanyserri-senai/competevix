@@ -13,6 +13,7 @@ export function EventForm({
   event,
   allowGeneral,
   defaultDate,
+  rooms = [],
 }: {
   programId: string;
   teams: Opt[];
@@ -20,6 +21,8 @@ export function EventForm({
   event?: AgendaEvent & { team_id: string | null };
   allowGeneral: boolean;
   defaultDate: string;
+  /** Ambientes reserváveis da unidade (RF09) */
+  rooms?: Opt[];
 }) {
   const s = event ? zonedParts(event.starts_at) : null;
   const e = event ? zonedParts(event.ends_at) : null;
@@ -45,7 +48,13 @@ export function EventForm({
         <option value="">A definir</option>
         {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
       </SelectField>
-      <TextField id={`ev-loc-${k}`} name="location" label="Local" defaultValue={event?.location ?? ""} />
+      <TextField id={`ev-loc-${k}`} name="location" label="Local (texto livre)" defaultValue={event?.location ?? ""} />
+      {rooms.length ? (
+        <SelectField id={`ev-room-${k}`} name="resource_id" label="Ambiente reservado" defaultValue={event?.resource_id ?? ""} hint="Usado na detecção de conflitos de ambiente.">
+          <option value="">Nenhum</option>
+          {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </SelectField>
+      ) : null}
       {!event ? (
         <SelectField id={`ev-part-${k}`} name="participant_ids" label="Participantes" multiple className="sm:col-span-2" hint="Ctrl/Cmd + clique para selecionar vários. Usado na detecção de conflitos.">
           {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}

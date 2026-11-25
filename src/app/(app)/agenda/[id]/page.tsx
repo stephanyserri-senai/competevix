@@ -39,6 +39,8 @@ export default async function EventoPage({ params }: PageProps<"/agenda/[id]">) 
     listPeopleOptions(supabase),
   ]);
   const event: AgendaEvent = { ...ev, participant_ids: ev.participants.map((p) => p.person_id) };
+  const { data: roomRows } = await supabase.from("resources").select("id, name").eq("bookable", true).is("archived_at", null).order("name");
+  const rooms = (roomRows ?? []).map((r) => ({ id: r.id, name: r.name }));
   const canEdit = hasRole(access, ev.program_id, "supervisao") || (hasRole(access, ev.program_id, "orientador") && Boolean(ev.team_id));
   const now = new Date();
   const upcoming = ev.recurrence_freq
@@ -131,6 +133,7 @@ export default async function EventoPage({ params }: PageProps<"/agenda/[id]">) 
                   event={event as AgendaEvent & { team_id: string | null }}
                   allowGeneral={hasRole(access, ev.program_id, "supervisao")}
                   defaultDate={zonedParts(ev.starts_at).date}
+                  rooms={rooms}
                 />
               </CardBody>
             </Card>

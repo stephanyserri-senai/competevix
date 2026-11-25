@@ -15,6 +15,10 @@ import { formatDate, formatDateTime, todayLocal } from "@/lib/dates";
 import { listPrograms, programLabel } from "@/features/programas/queries";
 import { addMembership, inviteUser, revokeMembership, setUserActive } from "@/features/admin/actions";
 import { saveUnit, setArchived } from "@/features/programas/actions";
+import { BulkImport } from "@/features/admin/bulk-import";
+import { addCalendarDay, loadNationalHolidays, removeCalendarDay } from "@/features/calendario/actions";
+import { CALENDAR_KIND_LABEL } from "@/features/calendario/domain";
+import { Checkbox } from "@/components/ui/field";
 
 export const metadata: Metadata = { title: "Configurações" };
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -30,7 +34,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
   const sp = await searchParams;
   const access = await requireAccess();
   const supabase = await createClient();
-  const tab = one(sp.aba) || (access.isAdmin ? "usuarios" : "auditoria");
+  const tab = one(sp.aba) || (access.isAdmin ? "importar" : "auditoria");
   const isSup = isSupervisorAnywhere(access);
 
   if (!access.isAdmin && !isSup) {
@@ -43,8 +47,9 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
   }
 
   const tabs = [
-    ...(access.isAdmin ? [["usuarios", "Usuários e vínculos"], ["unidades", "Unidades"]] : []),
+    ...(access.isAdmin ? [["importar", "Importar usuários"], ["usuarios", "Usuários e vínculos"], ["unidades", "Unidades"]] : []),
     ["parametros", "Parâmetros"],
+    ["calendario", "Calendário"],
     ["auditoria", "Auditoria"],
   ] as const;
 
@@ -60,8 +65,32 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
         ))}
       </nav>
       {tab === "usuarios" && access.isAdmin ? <UsersTab q={one(sp.usuario)} /> : null}
+      {tab === "importar" && access.isAdmin ? (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader title="Importar usuários em massa" description="Cria usuários, vínculos de acesso (papel + unidade ou programa + vigência) e, para orientadores e competidores, o cadastro de pessoa ligado ao login." />
+            <CardBody><BulkImport /></CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="Colunas do CSV" />
+            <CardBody className="space-y-2 text-sm text-slate-700">
+              <p><code>email; nome; papel; unidade; competicao; ciclo; inicio; fim</code></p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li><strong>papel</strong>: supervisao, orientador, competidor, gestao ou avaliador.</li>
+                <li><strong>unidade</strong>: código (BEIRA-MAR, PORTO) ou nome.</li>
+                <li><strong>competicao</strong> + <strong>ciclo</strong>: códigos do programa (ex.: WORLDSKILLS e 2027-2028). Em branco = unidade inteira (só supervisão e gestão).</li>
+                <li><strong>inicio</strong>/<strong>fim</strong>: opcionais (DD/MM/AAAA). Avaliadores: informe o fim.</li>
+                <li>Mais de um papel ou programa para a mesma pessoa = uma linha para cada.</li>
+              </ul>
+              <p>Primeiro clique em <strong>Validar</strong>: nada é gravado até não haver erros e você clicar em <strong>Importar</strong>. Linhas repetidas em nova importação são ignoradas (“vínculo já existia”).</p>
+              <p className="text-xs text-slate-500">Vincular pessoas às equipes continua em Equipes (supervisão).</p>
+            </CardBody>
+          </Card>
+        </div>
+      ) : null}
       {tab === "unidades" && access.isAdmin ? <UnitsTab /> : null}
       {tab === "parametros" ? <ParamsTab /> : null}
+      {tab === "calendario" ? <CalendarTab year={Number(one(sp.ano)) || Number(todayLocal().slice(0, 4))} /> : null}
       {tab === "auditoria" ? <AuditTab table={one(sp.tabela)} /> : null}
     </>
   );
@@ -77,6 +106,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
     const progName = new Map(programs.map((p) => [p.id, programLabel(p)]));
     const unitName = new Map((units ?? []).map((u) => [u.id, u.name]));
     const today = todayLocal();
+    const activePrograms = programs.filter((p) => !p.archived_at);
     const filtered = (users ?? []).filter((u) => !q || `${u.display_name} ${u.email}`.toLowerCase().includes(q.toLowerCase()));
 
     return (
@@ -122,6 +152,12 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
                       })}
                     </ul>
                   )}
+                  {activePrograms.length === 0 && (units ?? []).length === 0 ? (
+                    <Alert tone="warning" title="Nenhum programa ou unidade cadastrado">
+                      Execute o cadastro inicial (<code>supabase/seed/references.sql</code>) no SQL Editor do Supabase ou cadastre unidades
+                      na aba Unidades e programas em Competições antes de criar vínculos.
+                    </Alert>
+                  ) : null}
                   <details>
                     <summary className="cursor-pointer text-sm font-medium text-brand-700">+ Novo vínculo de acesso</summary>
                     <ActionForm action={addMembership} schema="membership" resetOnSuccess submitLabel="Criar vínculo" className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -135,7 +171,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
                       </SelectField>
                       <SelectField id={`pr-${u.id}`} name="program_id" label="Programa" defaultValue="">
                         <option value="">—</option>
-                        {programs.filter((p) => !p.archived_at).map((p) => <option key={p.id} value={p.id}>{programLabel(p)}</option>)}
+                        {activePrograms.map((p) => <option key={p.id} value={p.id}>{programLabel(p)}</option>)}
                       </SelectField>
                       <SelectField id={`un-${u.id}`} name="unit_id" label="Unidade" defaultValue="">
                         <option value="">—</option>
@@ -236,6 +272,74 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
           </ul>
         </CardBody>
       </Card>
+    );
+  }
+
+  async function CalendarTab({ year }: { year: number }) {
+    const [{ data: days }, { data: units }, programs] = await Promise.all([
+      supabase.from("calendar_days").select("*, unit:units(name)").gte("day", `${year}-01-01`).lte("day", `${year}-12-31`).order("day"),
+      supabase.from("units").select("id, name").is("archived_at", null).order("name"),
+      listPrograms(supabase),
+    ]);
+    const supervisedUnits = new Set(programs.filter((p) => (access.roles[p.id] ?? []).includes("supervisao")).map((p) => p.unit_id));
+    const writableUnits = (units ?? []).filter((u) => access.isAdmin || supervisedUnits.has(u.id));
+    const canWrite = (unitId: string | null) => access.isAdmin || (unitId !== null && supervisedUnits.has(unitId));
+    return (
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader title={`Dias não úteis — ${year}`} description="Dias marcados “descontar da CH” saem do previsto da carga horária. Fins de semana já são excluídos."
+            actions={<span className="flex gap-2 text-sm"><Link href={`/configuracoes?aba=calendario&ano=${year - 1}`} className="text-brand-700 hover:underline">← {year - 1}</Link><Link href={`/configuracoes?aba=calendario&ano=${year + 1}`} className="text-brand-700 hover:underline">{year + 1} →</Link></span>} />
+          <CardBody>
+            {(days ?? []).length === 0 ? <EmptyState title="Nenhum dia cadastrado neste ano" /> : (
+              <Table caption="Calendário">
+                <thead><tr><Th>Data</Th><Th>Descrição</Th><Th>Tipo</Th><Th>Abrangência</Th><Th>CH</Th><Th><span className="sr-only">Ações</span></Th></tr></thead>
+                <tbody>{(days ?? []).map((d) => (
+                  <Tr key={d.id}>
+                    <Td className="whitespace-nowrap">{formatDate(d.day)}</Td>
+                    <Td>{d.description}{d.source ? <p className="text-xs text-slate-500">{d.source}</p> : null}</Td>
+                    <Td className="text-xs">{CALENDAR_KIND_LABEL[d.kind]}</Td>
+                    <Td className="text-xs">{d.unit?.name ?? "Todas as unidades"}</Td>
+                    <Td>{d.affects_ch ? <Badge tone="warning">Desconta</Badge> : <Badge>Não desconta</Badge>}</Td>
+                    <Td>{canWrite(d.unit_id) ? <RunButton label="Remover" onRun={removeCalendarDay.bind(null, d.id)} confirm="Remover este dia?" /> : null}</Td>
+                  </Tr>
+                ))}</tbody>
+              </Table>
+            )}
+          </CardBody>
+        </Card>
+        <div className="space-y-6">
+          {writableUnits.length || access.isAdmin ? (
+            <Card>
+              <CardHeader title="Incluir dia" description="Feriado estadual/municipal, recesso escolar, ponto facultativo…" />
+              <CardBody>
+                <ActionForm action={addCalendarDay} schema="calendarDay" resetOnSuccess submitLabel="Incluir">
+                  <TextField name="day" type="date" label="Data" required />
+                  <TextField name="description" label="Descrição" required />
+                  <SelectField name="kind" label="Tipo" defaultValue="feriado_municipal">
+                    {Object.entries(CALENDAR_KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </SelectField>
+                  <SelectField name="unit_id" label="Abrangência" defaultValue={access.isAdmin ? "" : writableUnits[0]?.id}>
+                    {access.isAdmin ? <option value="">Todas as unidades</option> : null}
+                    {writableUnits.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </SelectField>
+                  <TextField name="source" label="Fonte" hint="Lei, decreto, calendário escolar…" />
+                  <Checkbox id="cal-ch" name="affects_ch" defaultChecked label="Descontar da CH (dia sem treino previsto)" />
+                </ActionForm>
+              </CardBody>
+            </Card>
+          ) : null}
+          {access.isAdmin ? (
+            <Card>
+              <CardHeader title="Feriados nacionais" description="Carrega as datas nacionais do ano (fixas + Paixão de Cristo), para todas as unidades. Não inclui estaduais, municipais nem pontos facultativos." />
+              <CardBody>
+                <ActionForm action={loadNationalHolidays} submitLabel="Carregar" submitVariant="secondary">
+                  <TextField name="year" type="number" min={2024} max={2035} label="Ano" defaultValue={year} />
+                </ActionForm>
+              </CardBody>
+            </Card>
+          ) : null}
+        </div>
+      </div>
     );
   }
 

@@ -18,8 +18,8 @@ insert into public.competitions (code, name, kind, description) values
   ('E-KART', 'E-Kart', 'ekart', 'Cadastrável com módulos comuns; levantamento específico na etapa 5.')
 on conflict (code) do nothing;
 
--- Ciclo das metas 2027. Datas oficiais não informadas no PRD: permanecem vazias.
-insert into public.cycles (code, name) values ('2027', 'Ciclo 2027')
+-- Ciclo 2027–2028 (decisão da supervisão, 25/11/2026). Datas oficiais ainda não informadas: permanecem vazias.
+insert into public.cycles (code, name) values ('2027-2028', 'Ciclo 2027–2028')
 on conflict (code) do nothing;
 
 -- Programas com evidência no PRD:
@@ -29,7 +29,7 @@ select c.id, cy.id, u.id, 'planejamento'
 from (values ('WORLDSKILLS', 'BEIRA-MAR'), ('WORLDSKILLS', 'PORTO'), ('INOVA', 'BEIRA-MAR')) v(comp, unit)
 join public.competitions c on c.code = v.comp
 join public.units u on u.code = v.unit
-join public.cycles cy on cy.code = '2027'
+join public.cycles cy on cy.code = '2027-2028'
 on conflict (competition_id, cycle_id, unit_id) do nothing;
 
 -- Ocupações e metas (PRD §6 — fonte: infográfico; validar edição e comparabilidade)
@@ -42,6 +42,9 @@ from (values
 ) v(unit, code, name, target)
 join public.units u on u.code = v.unit
 join public.competitions c on c.code = 'WORLDSKILLS'
-join public.cycles cy on cy.code = '2027'
+join public.cycles cy on cy.code = '2027-2028'
 join public.programs p on p.competition_id = c.id and p.cycle_id = cy.id and p.unit_id = u.id
 on conflict (program_id, code) do nothing;
+
+-- Rubrica interna preliminar INOVA (criada aqui em instalações novas; idempotente)
+select private.seed_inova_rubric();

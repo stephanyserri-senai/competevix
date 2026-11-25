@@ -9,6 +9,40 @@ import {
 } from "@/features/schemas";
 import { BACKLOG_ORIGIN, BACKLOG_REUNIAO_2026_11_24 } from "./backlog-reuniao";
 
+/** Mover no workflow (quadro): a_fazer, em_andamento, em_validacao, concluida, cancelada. */
+export async function moveAction(id: string, stage: string, note?: string): Promise<FormState> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("move_action", { p_action: id, p_stage: stage, p_note: note || undefined });
+  if (error) return dbFailure(error);
+  revalidatePath("/acoes");
+  revalidatePath(`/acoes/${id}`);
+  revalidatePath("/dashboard");
+  return success("Ação atualizada.");
+}
+
+export async function setBlocked(id: string, blocked: boolean, reason?: string): Promise<FormState> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_action_blocked", { p_action: id, p_blocked: blocked, p_reason: reason || undefined });
+  if (error) return dbFailure(error);
+  revalidatePath("/acoes");
+  revalidatePath(`/acoes/${id}`);
+  return success(blocked ? "Ação sinalizada como bloqueada." : "Bloqueio removido.");
+}
+
+/** Criação rápida (modal do quadro): não redireciona. */
+export async function quickCreateAction(_: FormState, fd: FormData): Promise<FormState> {
+  const p = parseForm(actionSchema, fd);
+  if (!p.success) return invalid(p.error);
+  const { id: _id, ...v } = p.data;
+  void _id;
+  const supabase = await createClient();
+  const { error } = await supabase.from("actions").insert(v).select("id").single();
+  if (error) return dbFailure(error);
+  revalidatePath("/acoes");
+  revalidatePath("/dashboard");
+  return success("Ação criada em “A fazer”.");
+}
+
 export async function saveAction(_: FormState, fd: FormData): Promise<FormState> {
   const p = parseForm(actionSchema, fd);
   if (!p.success) return invalid(p.error);

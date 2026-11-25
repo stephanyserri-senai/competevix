@@ -21,6 +21,7 @@ export function DocumentUploader({
   compact = false,
   supersedesId,
   defaultTitle,
+  evidenceKinds,
 }: {
   programId: string;
   teamId?: string | null;
@@ -29,6 +30,8 @@ export function DocumentUploader({
   compact?: boolean;
   supersedesId?: string;
   defaultTitle?: string;
+  /** Para evidência de projeto: tipos de evidência a escolher */
+  evidenceKinds?: Record<string, string>;
 }) {
   const uid = useId();
   const formRef = useRef<HTMLFormElement>(null);
@@ -63,7 +66,9 @@ export function DocumentUploader({
       return setStatus({ tone: "error", text: "Falha no envio do arquivo. Nada foi registrado." });
     }
     setStatus({ tone: "info", text: "Verificando arquivo…" });
-    const fin = await finalizeUpload(prep.data.documentId, link, revalidate);
+    const finalLink: LinkTarget =
+      link?.type === "project" ? { ...link, kind: String(fd.get("evidence_kind") ?? "outro"), description: title } : link;
+    const fin = await finalizeUpload(prep.data.documentId, finalLink, revalidate);
     setBusy(false);
     if (!fin.ok) return setStatus({ tone: "error", text: fin.message });
     formRef.current?.reset();
@@ -82,6 +87,14 @@ export function DocumentUploader({
           <span className="mb-1 block font-medium text-slate-800">Título</span>
           <input name="title" defaultValue={defaultTitle} maxLength={200} placeholder="Usa o nome do arquivo se vazio" className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
         </label>
+        {evidenceKinds ? (
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium text-slate-800">Tipo de evidência</span>
+            <select name="evidence_kind" defaultValue="outro" className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+              {Object.entries(evidenceKinds).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </label>
+        ) : null}
         <label className="block text-sm">
           <span className="mb-1 block font-medium text-slate-800">Classificação</span>
           <select name="classification" defaultValue="interno" className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">

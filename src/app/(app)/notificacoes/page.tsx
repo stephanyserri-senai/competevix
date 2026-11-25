@@ -20,7 +20,7 @@ export default async function NotificacoesPage() {
     <>
       <PageHeader
         title="Notificações"
-        description="Alertas internos gerados pela rotina agendada: prazo vencido e checklist pendente. Resolvidos automaticamente quando a condição cessa. Sem envio externo no MVP."
+        description="Avisos do portal: ações para validar, aprovadas ou devolvidas, prazos vencidos e pendências. Somem sozinhos quando resolvidos."
         actions={<RunButton label="Marcar todas como lidas" variant="secondary" onRun={markAllRead} />}
       />
       {(data ?? []).length === 0 ? <EmptyState title="Nenhuma notificação" /> : (

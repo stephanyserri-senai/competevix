@@ -60,6 +60,16 @@ describe("conflitos", () => {
   });
 });
 
+describe("conflito de ambiente", () => {
+  it("mesmo ambiente sobreposto é conflito", () => {
+    const r = range("2026-11-30T00:00:00Z", "2026-12-01T00:00:00Z");
+    const a = { ...base, id: "a", resource_id: "lab" };
+    const b = { ...base, id: "b", starts_at: "2026-11-30T12:00:00Z", ends_at: "2026-11-30T13:00:00Z", resource_id: "lab" };
+    const conflicts = detectConflicts([a, b].flatMap((e) => expandOccurrences(e, [], ...r)));
+    expect(conflicts[0].reasons).toEqual(["mesmo ambiente"]);
+  });
+});
+
 describe("ICS", () => {
   it("gera RRULE, EXDATE e RECURRENCE-ID no fuso local", () => {
     const ev = { ...base, title: "Treino, técnico; semanal", recurrence_freq: "semanal" as const, recurrence_weekdays: [1, 3], recurrence_until: "2026-12-31" };

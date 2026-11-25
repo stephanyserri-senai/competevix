@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 /** Fluxos públicos: não dependem de sessão válida. */
 test.describe("acesso sem sessão", () => {
-  for (const path of ["/dashboard", "/acoes", "/agenda", "/configuracoes", "/documentos/00000000-0000-0000-0000-000000000000/download"]) {
+  for (const path of ["/dashboard", "/acoes", "/agenda", "/configuracoes", "/worldskills", "/acompanhamentos", "/inova", "/recursos", "/orcamento", "/riscos", "/relatorios", "/documentos/00000000-0000-0000-0000-000000000000/download"]) {
     test(`redireciona ${path} para o login`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(/\/login/);
