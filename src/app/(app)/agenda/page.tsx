@@ -44,6 +44,8 @@ export default async function AgendaPage({ searchParams }: PageProps<"/agenda">)
     supabase.from("teams").select("id, name").eq("program_id", program.id).is("archived_at", null).order("name"),
     listPeopleOptions(supabase),
   ]);
+  const { data: roomRows } = await supabase.from("resources").select("id, name").eq("unit_id", program.unit_id).eq("bookable", true).is("archived_at", null).order("name");
+  const rooms = (roomRows ?? []).map((r) => ({ id: r.id, name: r.name }));
   const occurrences = expandAll(events, exceptions, rangeStart, rangeEnd);
   const personName = new Map(people.map((p) => [p.id, p.full_name]));
   const conflicts = detectConflicts(occurrences, (id) => personName.get(id) ?? "pessoa vinculada");
@@ -148,7 +150,7 @@ export default async function AgendaPage({ searchParams }: PageProps<"/agenda">)
       </Card>
 
       <Card className="mb-6">
-        <CardHeader title="Conflitos de horário no período" description="Sobreposição com mesma pessoa (responsável/participante) ou mesma equipe." />
+        <CardHeader title="Conflitos de horário no período" description="Sobreposição com mesma pessoa (responsável/participante), mesma equipe ou mesmo ambiente." />
         <CardBody>
           {conflicts.length === 0 ? (
             <p className="text-sm text-slate-600">Nenhum conflito entre os eventos visíveis neste período.</p>
@@ -165,7 +167,7 @@ export default async function AgendaPage({ searchParams }: PageProps<"/agenda">)
               ))}
             </ul>
           )}
-          <p className="mt-3 text-xs text-slate-500">Considera apenas eventos que você pode ver. Ambientes/recursos entram na etapa 4 (RF09).</p>
+          <p className="mt-3 text-xs text-slate-500">Considera apenas eventos que você pode ver. Ambientes são cadastrados em Recursos (marcados como reserváveis).</p>
         </CardBody>
       </Card>
 
@@ -180,6 +182,7 @@ export default async function AgendaPage({ searchParams }: PageProps<"/agenda">)
                 people={people.map((p) => ({ id: p.id, name: p.full_name }))}
                 allowGeneral={isSup}
                 defaultDate={ref}
+                rooms={rooms}
               />
             )}
           </CardBody>

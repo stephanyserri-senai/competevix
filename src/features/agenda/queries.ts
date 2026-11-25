@@ -13,7 +13,7 @@ export async function loadAgenda(
   if (opts.programIds.length === 0) return { events: [], exceptions: [] };
   let q = supabase
     .from("events")
-    .select("id, program_id, title, description, location, type, starts_at, ends_at, all_day, team_id, owner_person_id, recurrence_freq, recurrence_interval, recurrence_weekdays, recurrence_until, recurrence_count, updated_at, participants:event_participants(person_id)")
+    .select("id, program_id, title, description, location, type, starts_at, ends_at, all_day, team_id, owner_person_id, resource_id, recurrence_freq, recurrence_interval, recurrence_weekdays, recurrence_until, recurrence_count, updated_at, participants:event_participants(person_id)")
     .in("program_id", opts.programIds)
     .is("archived_at", null)
     .lt("starts_at", opts.rangeEnd.toISOString())

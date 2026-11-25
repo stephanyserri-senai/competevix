@@ -36,13 +36,15 @@ export default async function DocumentosPage({ searchParams }: PageProps<"/docum
 
   const { data: docs } = await supabase
     .from("documents")
-    .select("id, title, original_name, mime_type, size_bytes, classification, version, created_at, archived_at, uploaded_by, team:teams(name), uploader:profiles!documents_uploaded_by_fkey(display_name)")
+    .select("id, title, original_name, mime_type, size_bytes, classification, version, supersedes_id, team_id, created_at, archived_at, uploaded_by, team:teams(name), uploader:profiles!documents_uploaded_by_fkey(display_name)")
     .eq("program_id", program.id)
     .is("archived_at", null)
     .order("created_at", { ascending: false })
     .limit(200);
   const canUpload = hasRole(access, program.id, "supervisao", "orientador");
   const isSup = hasRole(access, program.id, "supervisao");
+  // versões substituídas ficam no histórico; a nova versão é enviada a partir da mais recente
+  const superseded = new Set((docs ?? []).map((d) => d.supersedes_id).filter(Boolean));
 
   return (
     <>
@@ -63,12 +65,20 @@ export default async function DocumentosPage({ searchParams }: PageProps<"/docum
                     <Td>
                       <a href={`/documentos/${d.id}/download`} className="font-medium text-brand-700 hover:underline">{d.title}</a>
                       <p className="text-xs text-slate-600">
-                        {ALLOWED_TYPES[d.mime_type]?.label ?? d.mime_type} · {formatSize(d.size_bytes)} · v{d.version}{d.team ? ` · ${d.team.name}` : ""}
+                        {ALLOWED_TYPES[d.mime_type]?.label ?? d.mime_type} · {formatSize(d.size_bytes)} · v{d.version}{superseded.has(d.id) ? " (substituída)" : ""}{d.team ? ` · ${d.team.name}` : ""}
                       </p>
                     </Td>
                     <Td><Badge tone={d.classification === "confidencial" ? "danger" : d.classification === "restrito" ? "warning" : "neutral"}>{CLASSIFICATION_LABEL[d.classification]}</Badge></Td>
                     <Td className="text-xs">{formatDateTime(d.created_at)}<br />{d.uploader?.display_name ?? "—"}</Td>
-                    <Td>{isSup || d.uploaded_by === access.userId ? <ArchiveDocButton id={d.id} /> : null}</Td>
+                    <Td>
+                      {isSup || d.uploaded_by === access.userId ? <ArchiveDocButton id={d.id} /> : null}
+                      {isSup && !superseded.has(d.id) ? (
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-xs text-brand-700">Nova versão</summary>
+                          <div className="mt-2 w-72"><DocumentUploader programId={program.id} teamId={d.team_id} supersedesId={d.id} defaultTitle={d.title} revalidate="/documentos" compact /></div>
+                        </details>
+                      ) : null}
+                    </Td>
                   </Tr>
                 ))}
               </tbody>

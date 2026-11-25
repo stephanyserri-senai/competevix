@@ -116,6 +116,7 @@ export const eventSchema = z
     start_time: zTime("Início"),
     end_time: zTime("Término"),
     owner_person_id: zOptUuid("Responsável"),
+    resource_id: zOptUuid("Ambiente"),
     participant_ids: z.preprocess(toArray, z.array(z.uuid())),
     recurrence_freq: z.preprocess(emptyToNull, z.enum(["diaria", "semanal", "mensal"]).nullable()),
     recurrence_interval: z.coerce.number().int().min(1).max(52).default(1),
@@ -473,6 +474,123 @@ export const projectResultSchema = z
   })
   .refine((d) => d.total_score !== null || d.placement !== null, { path: ["total_score"], message: "Informe a nota ou a colocação." });
 
+/* ------------------------------------------------- Etapa 4: recursos e gestão */
+const zMoney = (label: string) =>
+  z.coerce.number({ message: `${label}: informe um valor.` }).positive(`${label}: deve ser maior que zero.`).max(1e11, `${label}: valor muito alto.`)
+    .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, `${label}: use no máximo 2 casas decimais.`);
+
+export const resourceSchema = z.object({
+  id: zOptId,
+  unit_id: zUuid("Unidade"),
+  type: z.enum(["equipamento", "ambiente", "ferramenta", "insumo", "software", "outro"]),
+  name: zText(2, 160, "Nome"),
+  asset_code: zOptText(60, "Patrimônio"),
+  quantity: z.coerce.number().min(0, "Quantidade não pode ser negativa.").max(1e7),
+  measure_unit: zText(1, 20, "Unidade de medida"),
+  condition: z.enum(["bom", "regular", "ruim", "indisponivel"]),
+  location: zOptText(160, "Local"),
+  availability_note: zOptText(1000, "Disponibilidade"),
+  bookable: zCheckbox,
+});
+
+export const resourceRequestSchema = z.object({
+  program_id: zUuid("Programa"),
+  team_id: zOptUuid("Equipe"),
+  resource_id: zOptUuid("Recurso"),
+  title: zText(3, 200, "Item"),
+  quantity: z.coerce.number().positive("Quantidade deve ser maior que zero.").max(1e7),
+  justification: zText(3, 2000, "Justificativa"),
+  needed_by: zOptDate("Necessário até"),
+  needs_analysis: zCheckbox,
+  blocking: zCheckbox,
+});
+
+export const requestStatusSchema = z.object({
+  id: zUuid("Solicitação"),
+  status: z.enum(["enviada", "em_analise", "aprovada", "rejeitada", "atendida", "cancelada"]),
+  note: zOptText(2000, "Observação"),
+});
+
+export const movementSchema = z.object({
+  resource_id: zUuid("Recurso"),
+  program_id: zOptUuid("Programa"),
+  request_id: zOptUuid("Solicitação"),
+  from_location: zOptText(160, "Origem"),
+  to_location: zText(2, 160, "Destino"),
+  quantity: z.coerce.number().positive("Quantidade deve ser maior que zero."),
+  moved_on: zDate("Data"),
+  approval_ref: zOptText(120, "Referência da aprovação"),
+  note: zOptText(1000, "Observação"),
+});
+
+export const budgetItemSchema = z.object({
+  program_id: zUuid("Programa"),
+  category: z.enum(["insumos", "equipamentos", "servicos", "viagens", "alimentacao", "bolsas", "outros"]),
+  description: zText(3, 300, "Descrição"),
+  estimated: z.coerce.number().min(0, "Estimativa não pode ser negativa.").max(1e11),
+  request_id: zOptUuid("Solicitação"),
+});
+
+export const budgetTxSchema = z.object({
+  item_id: zUuid("Item"),
+  program_id: zUuid("Programa"),
+  type: z.enum(["solicitado", "aprovado", "comprometido", "realizado"]),
+  amount: zMoney("Valor"),
+  occurred_on: zDate("Data"),
+  parent_id: zOptUuid("Compromisso"),
+  approval_ref: zOptText(120, "Referência"),
+  note: zOptText(1000, "Observação"),
+});
+
+export const cancelTxSchema = z.object({ id: zUuid("Lançamento"), cancel_note: zText(3, 1000, "Justificativa") });
+
+export const benchmarkSchema = z
+  .object({
+    id: zOptId,
+    program_id: zUuid("Programa"),
+    reference: zText(2, 200, "Referência"),
+    contact: zOptText(200, "Contato"),
+    objective: zText(3, 2000, "Objetivo"),
+    scheduled_on: zOptDate("Data"),
+    status: z.enum(["planejado", "realizado", "cancelado"]),
+    findings: zOptText(8000, "Achados"),
+  })
+  .refine((d) => d.status !== "realizado" || Boolean(d.findings), { path: ["findings"], message: "Registre os achados para marcar como realizado." });
+
+export const derivedActionSchema = z.object({
+  benchmark_id: zUuid("Benchmarking"),
+  program_id: zUuid("Programa"),
+  title: zText(3, 200, "Ação"),
+  due_date: zOptDate("Prazo"),
+});
+
+export const riskSchema = z
+  .object({
+    program_id: zUuid("Programa"),
+    team_id: zOptUuid("Equipe"),
+    title: zText(3, 200, "Risco"),
+    description: zOptText(2000, "Descrição"),
+    category: zOptText(60, "Categoria"),
+    probability: z.coerce.number().int().min(1, "1 a 5.").max(5, "1 a 5."),
+    impact: z.coerce.number().int().min(1, "1 a 5.").max(5, "1 a 5."),
+    mitigation: zOptText(2000, "Mitigação"),
+    owner_person_id: zOptUuid("Responsável"),
+    due_date: zOptDate("Prazo"),
+    next_review: zOptDate("Próxima revisão"),
+  });
+
+export const riskReviewSchema = z
+  .object({
+    id: zUuid("Risco"),
+    probability: z.coerce.number().int().min(1).max(5),
+    impact: z.coerce.number().int().min(1).max(5),
+    status: z.enum(["aberto", "mitigando", "fechado"]),
+    mitigation: zOptText(2000, "Mitigação"),
+    next_review: zOptDate("Próxima revisão"),
+    note: zText(3, 2000, "Comentário da revisão"),
+  })
+  .refine((d) => d.status !== "fechado" || Boolean(d.mitigation), { path: ["mitigation"], message: "Para fechar, registre a mitigação." });
+
 export const SCHEMAS = {
   unit: unitSchema,
   competition: competitionSchema,
@@ -522,6 +640,17 @@ export const SCHEMAS = {
   revise: reviseSchema,
   criterion: criterionSchema,
   projectResult: projectResultSchema,
+  resource: resourceSchema,
+  resourceRequest: resourceRequestSchema,
+  requestStatus: requestStatusSchema,
+  movement: movementSchema,
+  budgetItem: budgetItemSchema,
+  budgetTx: budgetTxSchema,
+  cancelTx: cancelTxSchema,
+  benchmark: benchmarkSchema,
+  derivedAction: derivedActionSchema,
+  risk: riskSchema,
+  riskReview: riskReviewSchema,
 } as const;
 
 export type SchemaKey = keyof typeof SCHEMAS;

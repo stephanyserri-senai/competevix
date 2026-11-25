@@ -3,7 +3,7 @@
 Portal de gestão integrada das competições do SENAI Vitória (Beira-Mar e Porto).
 Documento norteador: [`docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md`](<docs/gestao-estrategica/00 - Gestao estrategica/COMPETE_VIX_PRD.md>) v0.1 (24/11/2026). Plano técnico em
 [`docs/PLANO_IMPLEMENTACAO.md`](docs/PLANO_IMPLEMENTACAO.md); relatórios em
-[`docs/ETAPA_1.md`](docs/ETAPA_1.md), [`docs/ETAPA_2.md`](docs/ETAPA_2.md) e [`docs/ETAPA_3.md`](docs/ETAPA_3.md).
+[`docs/ETAPA_1.md`](docs/ETAPA_1.md), [`docs/ETAPA_2.md`](docs/ETAPA_2.md), [`docs/ETAPA_3.md`](docs/ETAPA_3.md) e [`docs/ETAPA_4.md`](docs/ETAPA_4.md).
 
 A estrutura documental de gestão (ciclo 2027–2028: plano diretor, cronograma, planos de
 treinamento, matrizes, atas, benchmarking) está em [`docs/gestao-estrategica/`](docs/gestao-estrategica/README.md).
@@ -83,7 +83,7 @@ Abra `supabase/instalacao/instalacao_completa.sql` no GitHub (botão **Raw**), c
 **uma única vez** no SQL Editor de um projeto novo. Contém todas as migrations e as referências do PRD,
 numa transação. Para regenerar após novas migrations: `scripts/bundle-sql.sh`.
 
-Projeto já instalado? Aplique, em ordem, só as atualizações que faltam: `supabase/instalacao/atualizacao_etapa2.sql`, `atualizacao_etapa3.sql`
+Projeto já instalado? Aplique, em ordem, só as atualizações que faltam: `supabase/instalacao/atualizacao_etapa2.sql`, `atualizacao_etapa3.sql` (ou `atualizacao_etapa3_ajuste.sql`), `atualizacao_etapa4.sql`
 (mesmo procedimento). `supabase/instalacao/diagnostico.sql` mostra o que está instalado.
 
 ### Configurações obrigatórias no painel do Supabase (Auth)

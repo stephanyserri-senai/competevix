@@ -24,6 +24,7 @@ export async function saveEvent(_: FormState, fd: FormData): Promise<FormState> 
     starts_at: starts.toISOString(),
     ends_at: ends.toISOString(),
     owner_person_id: d.owner_person_id,
+    resource_id: d.resource_id,
     recurrence_freq: d.recurrence_freq,
     recurrence_interval: d.recurrence_freq ? d.recurrence_interval : 1,
     recurrence_weekdays: d.recurrence_freq === "semanal" && d.recurrence_weekdays.length ? d.recurrence_weekdays : null,

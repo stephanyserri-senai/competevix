@@ -52,4 +52,4 @@ export const NAV: { section: string; items: NavItem[] }[] = [
 export const UNIT_ICON = Building2;
 
 /** Etapa já entregue: itens com etapa maior aparecem marcados como previstos. */
-export const CURRENT_STAGE = 3;
+export const CURRENT_STAGE = 4;

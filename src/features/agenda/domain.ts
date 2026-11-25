@@ -26,6 +26,8 @@ export type AgendaEvent = {
   all_day?: boolean;
   team_id?: string | null;
   owner_person_id?: string | null;
+  /** Ambiente reservado (RF09) — entra na detecção de conflitos */
+  resource_id?: string | null;
   recurrence_freq: RecurrenceFreq | null;
   recurrence_interval: number;
   recurrence_weekdays: number[] | null;
@@ -152,7 +154,7 @@ export type Conflict = { a: Occurrence; b: Occurrence; reasons: string[] };
 
 /**
  * Conflito = duas ocorrências que se sobrepõem no tempo e compartilham
- * a mesma pessoa (responsável/participante) ou a mesma equipe.
+ * a mesma pessoa (responsável/participante), a mesma equipe ou o mesmo ambiente.
  */
 export function detectConflicts(occurrences: Occurrence[], personName: (id: string) => string = (id) => id): Conflict[] {
   const sorted = [...occurrences].sort((x, y) => x.start.getTime() - y.start.getTime());
@@ -162,6 +164,7 @@ export function detectConflicts(occurrences: Occurrence[], personName: (id: stri
     if (o.event.owner_person_id) r.add(`p:${o.event.owner_person_id}`);
     for (const p of o.event.participant_ids ?? []) r.add(`p:${p}`);
     if (o.event.team_id) r.add(`t:${o.event.team_id}`);
+    if (o.event.resource_id) r.add(`r:${o.event.resource_id}`);
     return r;
   };
   for (let i = 0; i < sorted.length; i++) {
@@ -174,7 +177,7 @@ export function detectConflicts(occurrences: Occurrence[], personName: (id: stri
       const reasons: string[] = [];
       for (const res of resources(b)) {
         if (!ra.has(res)) continue;
-        reasons.push(res.startsWith("t:") ? "mesma equipe" : personName(res.slice(2)));
+        reasons.push(res.startsWith("t:") ? "mesma equipe" : res.startsWith("r:") ? "mesmo ambiente" : personName(res.slice(2)));
       }
       if (reasons.length) conflicts.push({ a, b, reasons });
     }
