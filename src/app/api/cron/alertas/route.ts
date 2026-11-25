@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "não autorizado" }, { status: 401 });
   }
   const admin = createAdminClient();
-  const [base, ws, ops] = await Promise.all([admin.rpc("refresh_alerts"), admin.rpc("refresh_alerts_ws"), admin.rpc("refresh_alerts_ops")]);
-  if (base.error || ws.error || ops.error) return NextResponse.json({ error: "falha ao atualizar alertas" }, { status: 500 });
-  return NextResponse.json({ ok: true, result: { geral: base.data?.[0] ?? null, worldskills: ws.data?.[0] ?? null, operacao: ops.data?.[0] ?? null } });
+  const [base, ws, ops, cad] = await Promise.all([
+    admin.rpc("refresh_alerts"), admin.rpc("refresh_alerts_ws"), admin.rpc("refresh_alerts_ops"), admin.rpc("refresh_alerts_cadence"),
+  ]);
+  if (base.error || ws.error || ops.error || cad.error) return NextResponse.json({ error: "falha ao atualizar alertas" }, { status: 500 });
+  return NextResponse.json({ ok: true, result: { geral: base.data?.[0] ?? null, worldskills: ws.data?.[0] ?? null, operacao: ops.data?.[0] ?? null, cadencias: cad.data?.[0] ?? null } });
 }

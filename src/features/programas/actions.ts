@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/database.types";
 import { dbFailure, invalid, parseForm, success, type FormState } from "@/lib/forms";
 import {
   competitionSchema, cycleSchema, occupationSchema, programSchema, programSettingsSchema, stageSchema, unitSchema,
@@ -68,8 +69,15 @@ export async function updateProgramSettings(_: FormState, fd: FormData): Promise
   const supabase = await createClient();
   const { data: current, error: e1 } = await supabase.from("programs").select("settings").eq("id", p.data.id).single();
   if (e1) return dbFailure(e1);
-  const settings = { ...(current.settings as Record<string, unknown>), acao_conclusao_exige: p.data.acao_conclusao_exige };
-  const { error } = await supabase.from("programs").update({ status: p.data.status, settings }).eq("id", p.data.id).select("id").single();
+  const { id: _id, status: _st, ...rest } = p.data;
+  void _id; void _st;
+  const settings: Record<string, unknown> = { ...(current.settings as Record<string, unknown>) };
+  for (const [k, v] of Object.entries(rest)) {
+    if (v === undefined) continue;
+    if (v === null) delete settings[k];
+    else settings[k] = typeof v === "boolean" ? String(v) : v;
+  }
+  const { error } = await supabase.from("programs").update({ status: p.data.status, settings: settings as Json }).eq("id", p.data.id).select("id").single();
   if (error) return dbFailure(error);
   revalidatePath(`/competicoes/${p.data.id}`);
   return success("Parâmetros do programa salvos.");

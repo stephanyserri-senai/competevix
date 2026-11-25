@@ -31,10 +31,11 @@ export default async function OrcamentoPage({ searchParams }: PageProps<"/orcame
   const isSup = hasRole(access, program.id, "supervisao");
   const isGestao = hasRole(access, program.id, "gestao");
 
-  const [{ data: summary }, { data: txs }, { data: requests }] = await Promise.all([
+  const [{ data: summary }, { data: txs }, { data: requests }, { data: docs }] = await Promise.all([
     supabase.from("budget_item_summary").select("*").eq("program_id", program.id).order("category"),
-    supabase.from("budget_transactions").select("*, creator:profiles!budget_transactions_created_by_fkey(display_name)").eq("program_id", program.id).order("occurred_on", { ascending: false }),
+    supabase.from("budget_transactions").select("*, creator:profiles!budget_transactions_created_by_fkey(display_name), document:documents(id, title)").eq("program_id", program.id).order("occurred_on", { ascending: false }),
     supabase.from("resource_requests").select("id, title, status").eq("program_id", program.id).in("status", ["aprovada", "atendida", "em_analise", "enviada"]),
+    supabase.from("documents").select("id, title, version, created_at").eq("program_id", program.id).is("archived_at", null).order("created_at", { ascending: false }).limit(200),
   ]);
   const items = (summary ?? []).filter((s) => !s.archived_at);
   const all = summarize((txs ?? []).map((t) => ({ id: t.id, type: t.type, amount: Number(t.amount), parent_id: t.parent_id, cancelled_at: t.cancelled_at })));
@@ -90,7 +91,7 @@ export default async function OrcamentoPage({ searchParams }: PageProps<"/orcame
                         {t.parent_id ? <span className="ml-1 text-xs text-slate-500">↳ compromisso</span> : null}
                         {t.cancelled_at ? <p className="text-xs text-red-700">Cancelado: {t.cancel_note}</p> : null}</Td>
                       <Td className="text-right">{formatBRL(t.amount)}</Td>
-                      <Td className="text-xs">{t.approval_ref ?? "—"}<p className="text-slate-500">{t.creator?.display_name} · {formatDateTime(t.created_at)}</p></Td>
+                      <Td className="text-xs">{t.approval_ref ?? "—"}{t.document ? <p><a href={`/documentos/${t.document.id}/download`} className="text-brand-700 hover:underline">Comprovante: {t.document.title}</a></p> : null}<p className="text-slate-500">{t.creator?.display_name} · {formatDateTime(t.created_at)}</p></Td>
                       {isSup ? <Td>{!t.cancelled_at ? (
                         <details><summary className="cursor-pointer text-xs text-brand-700">Cancelar</summary>
                           <ActionForm action={cancelBudgetTx} schema="cancelTx" submitLabel="Confirmar" submitVariant="danger" className="mt-2 space-y-2">
@@ -132,9 +133,12 @@ export default async function OrcamentoPage({ searchParams }: PageProps<"/orcame
                       ))}
                     </SelectField>
                   ) : null}
+                  <SelectField name="document_id" label="Comprovante (documento do programa)" defaultValue="" hint="Envie antes em Documentos, de preferência com classificação “restrito”.">
+                    <option value="">Sem comprovante</option>
+                    {(docs ?? []).map((d) => <option key={d.id} value={d.id}>{d.title} (v{d.version})</option>)}
+                  </SelectField>
                   <TextField name="note" label="Observação" />
                 </ActionForm>
-                <p className="mt-2 text-xs text-slate-500">Comprovantes: envie em Documentos (classificação restrita) e cite a referência aqui.</p>
               </CardBody>
             </Card>
           ) : null}

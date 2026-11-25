@@ -93,7 +93,7 @@ export default async function WorldSkillsPage({ searchParams }: PageProps<"/worl
   async function Visao() {
     const monthStart = startOfMonth(week);
     const monthEnd = addDays(addMonths(monthStart, 1), -1);
-    const [{ allocations, attendance }, { data: items }, { data: scores }, { data: ramp }] = await Promise.all([
+    const [{ allocations, attendance, nonWorking }, { data: items }, { data: scores }, { data: ramp }] = await Promise.all([
       loadChData(supabase, program!.id, week, weekEnd),
       supabase.from("training_items").select("due_date, status, plan:training_plans!inner(team_id, status)").eq("program_id", program!.id).eq("plan.status", "publicado").gte("due_date", monthStart).lte("due_date", monthEnd),
       supabase.from("assessments").select("id, held_on, type, scale, occupation_id, team_id, status, results:assessment_results(score, person_id, criterion)").eq("program_id", program!.id).eq("status", "publicado").order("held_on", { ascending: false }).limit(200),
@@ -113,7 +113,7 @@ export default async function WorldSkillsPage({ searchParams }: PageProps<"/worl
           <Alert tone="info" title="CH sem denominador">Não há alocações vigentes na semana: a CH aparece como N/A. A supervisão cadastra jornada e percentual em “Alocações”.</Alert>
         ) : null}
         {(teams ?? []).map((t) => {
-          const rows = chByPerson(allocations, attendance, week, weekEnd, { teamId: t.id });
+          const rows = chByPerson(allocations, attendance, week, weekEnd, { teamId: t.id, nonWorking });
           const total = chTotal(rows);
           const execW = executionRate((items ?? []).filter((i) => i.plan?.team_id === t.id), week, weekEnd);
           const execM = executionRate((items ?? []).filter((i) => i.plan?.team_id === t.id), monthStart, monthEnd);
@@ -152,7 +152,7 @@ export default async function WorldSkillsPage({ searchParams }: PageProps<"/worl
           );
         })}
         <p className="text-xs text-slate-500">
-          Metodologia: previsto = alocações vigentes rateadas por dia útil (seg–sex) do período real, sem descontar feriados (calendário oficial pendente); efetivo = presença individual por sessão;
+          Metodologia: previsto = alocações vigentes rateadas por dia útil (seg–sex) do período real, descontando feriados e recessos do Calendário (Configurações); efetivo = presença individual por sessão;
           execução = itens concluídos ÷ previstos com prazo no período (cancelados excluídos); desvio só com escala equivalente. Indicadores em escalas diferentes aparecem como N/A.
         </p>
       </div>

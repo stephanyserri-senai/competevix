@@ -72,3 +72,16 @@ echo "Gerado: $dir/atualizacao_etapa3_ajuste.sql"
   echo; echo "commit;"
 } > "$dir/atualizacao_etapa4.sql"
 echo "Gerado: $dir/atualizacao_etapa4.sql"
+
+# Etapa 4.1 = migrations a partir de 20261128 (calendário e cadências)
+{
+  header "ATUALIZAÇÃO — ETAPA 4.1 (calendário de feriados/recessos e cadências)" "Execute UMA ÚNICA VEZ num banco com as Etapas 1–4."
+  echo "begin;"
+  echo "do \$\$ begin"
+  echo "  if to_regclass('public.budget_items') is null then raise exception 'Aplique antes a Etapa 4 (atualizacao_etapa4.sql).'; end if;"
+  echo "  if to_regclass('public.calendar_days') is not null then raise exception 'Etapa 4.1 já instalada: nada a fazer.'; end if;"
+  echo "end \$\$;"
+  for f in supabase/migrations/20261128*.sql; do echo; echo "-- >>>>> $f"; cat "$f"; done
+  echo; echo "commit;"
+} > "$dir/atualizacao_etapa4_1.sql"
+echo "Gerado: $dir/atualizacao_etapa4_1.sql"

@@ -11,7 +11,7 @@
  *    sem duplicar (presença é única por sessão).
  * Execução = itens concluídos / itens previstos no período (cancelados saem do denominador).
  * Desvio = nota comparável − meta; só com escala equivalente. Sem nota comparável = N/A.
- * Feriados ainda não são descontados (calendário oficial pendente — PRD §14).
+ * Dias não úteis do calendário (feriados/recessos com affects_ch) saem do previsto.
  */
 import { addDays, weekday, zonedParts, type LocalDate } from "@/lib/dates";
 
@@ -27,21 +27,21 @@ export type ChRow = { person_id: string; planned: number; effective: number; pct
 
 export const CH_TARGET_PCT = 95;
 
-function businessDays(from: LocalDate, to: LocalDate): LocalDate[] {
+function businessDays(from: LocalDate, to: LocalDate, nonWorking?: Set<string>): LocalDate[] {
   const out: LocalDate[] = [];
   for (let d = from; d <= to; d = addDays(d, 1)) {
     const w = weekday(d);
-    if (w >= 1 && w <= 5) out.push(d);
+    if (w >= 1 && w <= 5 && !nonWorking?.has(d)) out.push(d);
   }
   return out;
 }
 
 /** Minutos previstos de uma alocação no período (rateio por dia útil vigente). */
-export function plannedMinutes(a: Allocation, start: LocalDate, end: LocalDate): number {
+export function plannedMinutes(a: Allocation, start: LocalDate, end: LocalDate, nonWorking?: Set<string>): number {
   const from = a.valid_from > start ? a.valid_from : start;
   const to = a.valid_to && a.valid_to < end ? a.valid_to : end;
   if (from > to) return 0;
-  return Math.round((a.planned_weekly_minutes / 5) * businessDays(from, to).length);
+  return Math.round((a.planned_weekly_minutes / 5) * businessDays(from, to, nonWorking).length);
 }
 
 export function chByPerson(
@@ -49,13 +49,13 @@ export function chByPerson(
   attendance: AttendanceRow[],
   start: LocalDate,
   end: LocalDate,
-  opts: { teamId?: string } = {},
+  opts: { teamId?: string; nonWorking?: Set<string> } = {},
 ): ChRow[] {
   const planned = new Map<string, number>();
   const effective = new Map<string, number>();
   for (const a of allocations) {
     if (opts.teamId && a.team_id !== opts.teamId) continue;
-    planned.set(a.person_id, (planned.get(a.person_id) ?? 0) + plannedMinutes(a, start, end));
+    planned.set(a.person_id, (planned.get(a.person_id) ?? 0) + plannedMinutes(a, start, end, opts.nonWorking));
   }
   for (const r of attendance) {
     if (opts.teamId && r.team_id !== opts.teamId) continue;

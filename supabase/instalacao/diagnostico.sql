@@ -13,4 +13,5 @@ select
   to_regclass('public.training_plans') is not null                as etapa2_worldskills,
   to_regclass('public.panels') is not null                        as etapa3_inova,
   to_regclass('public.project_results') is not null               as etapa3_ajuste_resultados,
-  to_regclass('public.budget_items') is not null                  as etapa4_gestao;
+  to_regclass('public.budget_items') is not null                  as etapa4_gestao,
+  to_regclass('public.calendar_days') is not null                 as etapa4_1_calendario;

@@ -5,7 +5,8 @@ import type { Allocation, AttendanceRow } from "./domain";
 
 /** Alocações e presenças visíveis (RLS) para o cálculo de CH no período. */
 export async function loadChData(supabase: ServerClient, programId: string, start: LocalDate, end: LocalDate) {
-  const [{ data: allocs }, { data: sessions }] = await Promise.all([
+  const { data: prog } = await supabase.from("programs").select("unit_id").eq("id", programId).maybeSingle();
+  const [{ data: allocs }, { data: sessions }, { data: days }] = await Promise.all([
     supabase
       .from("allocations")
       .select("id, person_id, team_id, base_weekly_minutes, percent, planned_weekly_minutes, valid_from, valid_to, note, person:people(full_name), team:teams(name)")
@@ -19,7 +20,16 @@ export async function loadChData(supabase: ServerClient, programId: string, star
       .gte("starts_at", zonedToUtc(start).toISOString())
       .lt("starts_at", zonedToUtc(addDays(end, 1)).toISOString())
       .limit(2000),
+    supabase
+      .from("calendar_days")
+      .select("day, unit_id")
+      .eq("affects_ch", true)
+      .gte("day", start)
+      .lte("day", end)
+      .or(`unit_id.is.null${prog?.unit_id ? `,unit_id.eq.${prog.unit_id}` : ""}`),
   ]);
+  /** Dias não úteis (feriados/recessos) que saem do previsto da CH */
+  const nonWorking = new Set((days ?? []).map((d) => d.day));
   const sessionById = new Map((sessions ?? []).map((s) => [s.id, s]));
   let attendance: AttendanceRow[] = [];
   if (sessionById.size) {
@@ -35,5 +45,5 @@ export async function loadChData(supabase: ServerClient, programId: string, star
       percent: Number(a.percent),
       planned_weekly_minutes: a.planned_weekly_minutes ?? Math.round((a.base_weekly_minutes * Number(a.percent)) / 100),
     }));
-  return { allocations, attendance, sessions: sessions ?? [] };
+  return { allocations, attendance, sessions: sessions ?? [], nonWorking };
 }

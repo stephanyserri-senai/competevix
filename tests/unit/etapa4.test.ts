@@ -42,3 +42,15 @@ describe("riscos e solicitações", () => {
     expect(toCsv([["a", 1.5, null, "x;y"]])).toBe('﻿a;1,5;;"x;y"\r\n');
   });
 });
+
+import { easterSunday, nationalHolidays } from "@/features/calendario/domain";
+describe("feriados nacionais", () => {
+  it("Páscoa e Paixão de Cristo", () => {
+    expect(easterSunday(2026)).toBe("2026-04-05");
+    expect(easterSunday(2027)).toBe("2027-03-28");
+    expect(easterSunday(2028)).toBe("2028-04-16");
+    const h = nationalHolidays(2027);
+    expect(h).toHaveLength(10);
+    expect(h.find((x) => x.description === "Paixão de Cristo")?.day).toBe("2027-03-26");
+  });
+});

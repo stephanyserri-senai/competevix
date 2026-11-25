@@ -15,6 +15,8 @@ import { PROGRAM_SELECT, programLabel } from "@/features/programas/queries";
 import { saveOccupation, saveStage, setArchived, updateProgramSettings } from "@/features/programas/actions";
 import { PROGRAM_STATUS_LABEL } from "@/features/labels";
 import { COMPLETION_RULE_LABEL, type CompletionRule } from "@/features/acoes/domain";
+import { CADENCE_OPTIONS } from "@/features/calendario/domain";
+import { Checkbox } from "@/components/ui/field";
 import type { Tables } from "@/lib/database.types";
 
 export default async function ProgramaPage({ params }: PageProps<"/competicoes/[id]">) {
@@ -31,7 +33,8 @@ export default async function ProgramaPage({ params }: PageProps<"/competicoes/[
   ]);
   const canManage = hasRole(access, id, "supervisao");
   const canSettings = canManage || access.isAdmin;
-  const settings = (program.settings ?? {}) as { acao_conclusao_exige?: CompletionRule };
+  const settings = (program.settings ?? {}) as { acao_conclusao_exige?: CompletionRule; simulado_parcial?: string; simulado_completo?: string; simulado_externo?: string; fechamento_prazo_dias?: number; alerta_ch?: string };
+  const isWs = program.competition?.kind === "worldskills";
   const path = `/competicoes/${id}`;
 
   return (
@@ -133,6 +136,23 @@ export default async function ProgramaPage({ params }: PageProps<"/competicoes/[
                 <SelectField name="acao_conclusao_exige" label="Conclusão de ações" defaultValue={settings.acao_conclusao_exige ?? "nada"} hint="Aplicada pelo banco a toda conclusão de ação deste programa.">
                   {Object.entries(COMPLETION_RULE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </SelectField>
+                <TextField name="fechamento_prazo_dias" type="number" min={0} max={7} label="Prazo do fechamento semanal (dias após o domingo)" defaultValue={settings.fechamento_prazo_dias ?? ""} hint="Vazio = 1 dia (alerta a partir de terça)." />
+                {isWs ? (
+                  <fieldset className="space-y-3 rounded-md border border-slate-200 p-3">
+                    <legend className="px-1 text-sm font-medium">Cadências e alertas WorldSkills</legend>
+                    <SelectField name="simulado_parcial" label="Simulado parcial" defaultValue={settings.simulado_parcial ?? ""}>
+                      {Object.entries(CADENCE_OPTIONS.simulado_parcial).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </SelectField>
+                    <SelectField name="simulado_completo" label="Simulado completo" defaultValue={settings.simulado_completo ?? ""}>
+                      {Object.entries(CADENCE_OPTIONS.simulado_completo).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </SelectField>
+                    <SelectField name="simulado_externo" label="Avaliação externa" defaultValue={settings.simulado_externo ?? ""}>
+                      {Object.entries(CADENCE_OPTIONS.simulado_externo).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </SelectField>
+                    <Checkbox id="alerta-ch" name="alerta_ch" defaultChecked={settings.alerta_ch === "true"} label="Alertar CH da semana abaixo de 95%" />
+                    <p className="text-xs text-slate-500">Alertas de simulado ausente só valem para equipes com plano publicado no período. Sem configuração, nenhum alerta é gerado.</p>
+                  </fieldset>
+                ) : null}
               </ActionForm>
             ) : (
               <dl className="space-y-2 text-sm">

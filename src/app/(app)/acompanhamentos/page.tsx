@@ -56,7 +56,7 @@ export default async function AcompanhamentosPage({ searchParams }: PageProps<"/
           {(teams ?? []).map((t) => {
             const versions = (reports ?? []).filter((r) => r.team_id === t.id);
             const latest = versions[0];
-            const suggested = chTotal(chByPerson(ch.allocations, ch.attendance, week, weekEnd, { teamId: t.id }));
+            const suggested = chTotal(chByPerson(ch.allocations, ch.attendance, week, weekEnd, { teamId: t.id, nonWorking: ch.nonWorking }));
             return (
               <Card key={t.id}>
                 <CardHeader title={t.name} actions={latest ? <Badge tone={TONE[latest.status]}>{REPORT_STATUS_LABEL[latest.status]}{latest.version > 1 ? ` · v${latest.version}` : ""}</Badge> : <Badge tone="danger">Não iniciado</Badge>} />

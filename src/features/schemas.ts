@@ -42,6 +42,21 @@ export const programSettingsSchema = z.object({
   id: zUuid("Programa"),
   status: z.enum(["planejamento", "ativo", "encerrado"]),
   acao_conclusao_exige: z.enum(["nada", "nota", "evidencia", "nota_ou_evidencia"]),
+  // Cadências (vazio = não configurado → alerta desligado)
+  simulado_parcial: z.preprocess(emptyToNull, z.enum(["semanal", "quinzenal", "nenhum"]).nullable()).optional(),
+  simulado_completo: z.preprocess(emptyToNull, z.enum(["mensal", "semanal", "nenhum"]).nullable()).optional(),
+  simulado_externo: z.preprocess(emptyToNull, z.enum(["trimestral", "nenhum"]).nullable()).optional(),
+  fechamento_prazo_dias: z.preprocess(emptyToNull, z.coerce.number().int().min(0, "0 a 7 dias.").max(7, "0 a 7 dias.").nullable()).optional(),
+  alerta_ch: zCheckbox.optional(),
+});
+
+export const calendarDaySchema = z.object({
+  unit_id: zOptUuid("Unidade"),
+  day: zDate("Data"),
+  kind: z.enum(["feriado_nacional", "feriado_estadual", "feriado_municipal", "recesso", "ponto_facultativo", "outro"]),
+  description: zText(2, 160, "Descrição"),
+  affects_ch: zCheckbox,
+  source: zOptText(300, "Fonte"),
 });
 
 export const stageSchema = z
@@ -539,6 +554,7 @@ export const budgetTxSchema = z.object({
   occurred_on: zDate("Data"),
   parent_id: zOptUuid("Compromisso"),
   approval_ref: zOptText(120, "Referência"),
+  document_id: zOptUuid("Comprovante"),
   note: zOptText(1000, "Observação"),
 });
 
@@ -618,6 +634,7 @@ export const SCHEMAS = {
   documentMeta: documentMetaSchema,
   invite: inviteSchema,
   membership: membershipSchema,
+  calendarDay: calendarDaySchema,
   allocation: allocationSchema,
   competency: competencySchema,
   trainingPlan: trainingPlanSchema,

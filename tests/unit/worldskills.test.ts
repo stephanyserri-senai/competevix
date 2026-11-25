@@ -99,3 +99,11 @@ describe("execução do plano e desvio de pontuação", () => {
     expect(formatMinutes(1290)).toBe("21h30");
   });
 });
+
+describe("calendário na CH", () => {
+  it("feriado sai do previsto", () => {
+    const a = { person_id: "x", team_id: "t", planned_weekly_minutes: 2400, valid_from: "2026-11-01", valid_to: null };
+    expect(plannedMinutes(a, "2026-11-30", "2026-12-06", new Set(["2026-12-02"]))).toBe(1920);
+    expect(plannedMinutes(a, "2026-11-30", "2026-12-06", new Set(["2026-12-05"]))).toBe(2400); // sábado não muda
+  });
+});

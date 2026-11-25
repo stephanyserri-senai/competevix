@@ -44,3 +44,18 @@ Data: 25/11/2026 · Referência: PRD v0.1 §8, §9, §12 (item 4), RF09–RF14
 ## 4. Como aplicar no Supabase
 
 Cole `supabase/instalacao/atualizacao_etapa4.sql` (Raw no GitHub) no SQL Editor e clique em **Run** uma vez. O `diagnostico.sql` deve então mostrar a última coluna `etapa4_gestao` = **true**.
+
+---
+
+## Etapa 4.1 — Calendário, cadências e comprovantes (25/11/2026)
+
+| Entrega | Onde | Detalhe |
+|---|---|---|
+| Calendário de dias não úteis | Configurações → Calendário | Feriados e recessos globais (administração) ou por unidade (supervisão); “descontar da CH”; carga automática dos feriados nacionais do ano (datas fixas + Paixão de Cristo) |
+| CH com calendário | WorldSkills, Acompanhamentos, Relatórios, CSV | O previsto exclui os dias marcados; o cálculo do banco (`private.team_ch`) e o do domínio são idênticos (teste de paridade) |
+| Cadências por programa | Competições → programa → Parâmetros | Simulado parcial (semanal/quinzenal), completo (mensal/semanal), avaliação externa (trimestral), prazo do fechamento semanal, alerta de CH < 95% |
+| Alertas | rotina diária | CH abaixo da meta e simulado ausente **só disparam depois de configurados**, e só para equipes com plano publicado no período; resolvem sozinhos quando corrigidos |
+| Comprovante | Orçamento | Lançamento pode vincular um documento do programa; link exibido na lista |
+| Etapa 5 | `docs/LEVANTAMENTO_ETAPA_5.md` | Roteiro de levantamento para FRC, Giaffone, E-Kart, integrações e IA |
+
+Verificação: **120/120** testes (banco + unidade), lint e typecheck sem erros, build ok, **34/34** E2E públicos. Aplicar com `supabase/instalacao/atualizacao_etapa4_1.sql`; o diagnóstico deve mostrar `etapa4_1_calendario` = **true**.

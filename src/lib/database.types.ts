@@ -903,6 +903,57 @@ export type Database = {
           },
         ];
       };
+      calendar_days: {
+        Row: {
+          id: string;
+          unit_id: string | null;
+          day: string;
+          kind: Database["public"]["Enums"]["calendar_kind"];
+          description: string;
+          affects_ch: boolean;
+          source: string | null;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          unit_id?: string | null;
+          day: string;
+          kind: Database["public"]["Enums"]["calendar_kind"];
+          description: string;
+          affects_ch?: boolean;
+          source?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          unit_id?: string | null;
+          day?: string;
+          kind?: Database["public"]["Enums"]["calendar_kind"];
+          description?: string;
+          affects_ch?: boolean;
+          source?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calendar_days_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calendar_days_unit_id_fkey";
+            columns: ["unit_id"];
+            isOneToOne: false;
+            referencedRelation: "units";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       checklist_answer_evidences: {
         Row: {
           answer_id: string;
@@ -3821,6 +3872,10 @@ export type Database = {
         Args: never;
         Returns: { created: number; resolved: number }[];
       };
+      refresh_alerts_cadence: {
+        Args: never;
+        Returns: { created: number; resolved: number }[];
+      };
       refresh_alerts_ops: {
         Args: never;
         Returns: { created: number; resolved: number }[];
@@ -3865,6 +3920,7 @@ export type Database = {
       benchmark_status: "planejado" | "realizado" | "cancelado";
       budget_category: "insumos" | "equipamentos" | "servicos" | "viagens" | "alimentacao" | "bolsas" | "outros";
       budget_tx_type: "solicitado" | "aprovado" | "comprometido" | "realizado";
+      calendar_kind: "feriado_nacional" | "feriado_estadual" | "feriado_municipal" | "recesso" | "ponto_facultativo" | "outro";
       checklist_answer_value: "sim" | "nao" | "na";
       checklist_cadence: "semanal" | "mensal" | "avulsa";
       checklist_run_status: "aberto" | "concluido";
@@ -3921,6 +3977,7 @@ export const Constants = {
       benchmark_status: ["planejado", "realizado", "cancelado"],
       budget_category: ["insumos", "equipamentos", "servicos", "viagens", "alimentacao", "bolsas", "outros"],
       budget_tx_type: ["solicitado", "aprovado", "comprometido", "realizado"],
+      calendar_kind: ["feriado_nacional", "feriado_estadual", "feriado_municipal", "recesso", "ponto_facultativo", "outro"],
       checklist_answer_value: ["sim", "nao", "na"],
       checklist_cadence: ["semanal", "mensal", "avulsa"],
       checklist_run_status: ["aberto", "concluido"],

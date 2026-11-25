@@ -16,6 +16,9 @@ import { listPrograms, programLabel } from "@/features/programas/queries";
 import { addMembership, inviteUser, revokeMembership, setUserActive } from "@/features/admin/actions";
 import { saveUnit, setArchived } from "@/features/programas/actions";
 import { BulkImport } from "@/features/admin/bulk-import";
+import { addCalendarDay, loadNationalHolidays, removeCalendarDay } from "@/features/calendario/actions";
+import { CALENDAR_KIND_LABEL } from "@/features/calendario/domain";
+import { Checkbox } from "@/components/ui/field";
 
 export const metadata: Metadata = { title: "Configurações" };
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -46,6 +49,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
   const tabs = [
     ...(access.isAdmin ? [["importar", "Importar usuários"], ["usuarios", "Usuários e vínculos"], ["unidades", "Unidades"]] : []),
     ["parametros", "Parâmetros"],
+    ["calendario", "Calendário"],
     ["auditoria", "Auditoria"],
   ] as const;
 
@@ -86,6 +90,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
       ) : null}
       {tab === "unidades" && access.isAdmin ? <UnitsTab /> : null}
       {tab === "parametros" ? <ParamsTab /> : null}
+      {tab === "calendario" ? <CalendarTab year={Number(one(sp.ano)) || Number(todayLocal().slice(0, 4))} /> : null}
       {tab === "auditoria" ? <AuditTab table={one(sp.tabela)} /> : null}
     </>
   );
@@ -267,6 +272,74 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
           </ul>
         </CardBody>
       </Card>
+    );
+  }
+
+  async function CalendarTab({ year }: { year: number }) {
+    const [{ data: days }, { data: units }, programs] = await Promise.all([
+      supabase.from("calendar_days").select("*, unit:units(name)").gte("day", `${year}-01-01`).lte("day", `${year}-12-31`).order("day"),
+      supabase.from("units").select("id, name").is("archived_at", null).order("name"),
+      listPrograms(supabase),
+    ]);
+    const supervisedUnits = new Set(programs.filter((p) => (access.roles[p.id] ?? []).includes("supervisao")).map((p) => p.unit_id));
+    const writableUnits = (units ?? []).filter((u) => access.isAdmin || supervisedUnits.has(u.id));
+    const canWrite = (unitId: string | null) => access.isAdmin || (unitId !== null && supervisedUnits.has(unitId));
+    return (
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader title={`Dias não úteis — ${year}`} description="Dias marcados “descontar da CH” saem do previsto da carga horária. Fins de semana já são excluídos."
+            actions={<span className="flex gap-2 text-sm"><Link href={`/configuracoes?aba=calendario&ano=${year - 1}`} className="text-brand-700 hover:underline">← {year - 1}</Link><Link href={`/configuracoes?aba=calendario&ano=${year + 1}`} className="text-brand-700 hover:underline">{year + 1} →</Link></span>} />
+          <CardBody>
+            {(days ?? []).length === 0 ? <EmptyState title="Nenhum dia cadastrado neste ano" /> : (
+              <Table caption="Calendário">
+                <thead><tr><Th>Data</Th><Th>Descrição</Th><Th>Tipo</Th><Th>Abrangência</Th><Th>CH</Th><Th><span className="sr-only">Ações</span></Th></tr></thead>
+                <tbody>{(days ?? []).map((d) => (
+                  <Tr key={d.id}>
+                    <Td className="whitespace-nowrap">{formatDate(d.day)}</Td>
+                    <Td>{d.description}{d.source ? <p className="text-xs text-slate-500">{d.source}</p> : null}</Td>
+                    <Td className="text-xs">{CALENDAR_KIND_LABEL[d.kind]}</Td>
+                    <Td className="text-xs">{d.unit?.name ?? "Todas as unidades"}</Td>
+                    <Td>{d.affects_ch ? <Badge tone="warning">Desconta</Badge> : <Badge>Não desconta</Badge>}</Td>
+                    <Td>{canWrite(d.unit_id) ? <RunButton label="Remover" onRun={removeCalendarDay.bind(null, d.id)} confirm="Remover este dia?" /> : null}</Td>
+                  </Tr>
+                ))}</tbody>
+              </Table>
+            )}
+          </CardBody>
+        </Card>
+        <div className="space-y-6">
+          {writableUnits.length || access.isAdmin ? (
+            <Card>
+              <CardHeader title="Incluir dia" description="Feriado estadual/municipal, recesso escolar, ponto facultativo…" />
+              <CardBody>
+                <ActionForm action={addCalendarDay} schema="calendarDay" resetOnSuccess submitLabel="Incluir">
+                  <TextField name="day" type="date" label="Data" required />
+                  <TextField name="description" label="Descrição" required />
+                  <SelectField name="kind" label="Tipo" defaultValue="feriado_municipal">
+                    {Object.entries(CALENDAR_KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </SelectField>
+                  <SelectField name="unit_id" label="Abrangência" defaultValue={access.isAdmin ? "" : writableUnits[0]?.id}>
+                    {access.isAdmin ? <option value="">Todas as unidades</option> : null}
+                    {writableUnits.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </SelectField>
+                  <TextField name="source" label="Fonte" hint="Lei, decreto, calendário escolar…" />
+                  <Checkbox id="cal-ch" name="affects_ch" defaultChecked label="Descontar da CH (dia sem treino previsto)" />
+                </ActionForm>
+              </CardBody>
+            </Card>
+          ) : null}
+          {access.isAdmin ? (
+            <Card>
+              <CardHeader title="Feriados nacionais" description="Carrega as datas nacionais do ano (fixas + Paixão de Cristo), para todas as unidades. Não inclui estaduais, municipais nem pontos facultativos." />
+              <CardBody>
+                <ActionForm action={loadNationalHolidays} submitLabel="Carregar" submitVariant="secondary">
+                  <TextField name="year" type="number" min={2024} max={2035} label="Ano" defaultValue={year} />
+                </ActionForm>
+              </CardBody>
+            </Card>
+          ) : null}
+        </div>
+      </div>
     );
   }
 

@@ -59,13 +59,13 @@ export default async function RelatoriosPage({ searchParams }: PageProps<"/relat
 
   let ws: { team: string; ch: ReturnType<typeof chTotal>; exec: ReturnType<typeof executionRate> }[] = [];
   if (kind === "worldskills") {
-    const [{ allocations, attendance }, { data: items }] = await Promise.all([
+    const [{ allocations, attendance, nonWorking }, { data: items }] = await Promise.all([
       loadChData(supabase, program.id, start, end),
       supabase.from("training_items").select("due_date, status, plan:training_plans!inner(team_id, status)").eq("program_id", program.id).eq("plan.status", "publicado").gte("due_date", start).lte("due_date", end),
     ]);
     ws = (teams ?? []).map((t) => ({
       team: t.name,
-      ch: chTotal(chByPerson(allocations, attendance, start, end, { teamId: t.id })),
+      ch: chTotal(chByPerson(allocations, attendance, start, end, { teamId: t.id, nonWorking })),
       exec: executionRate((items ?? []).filter((i) => i.plan?.team_id === t.id), start, end),
     }));
   }
@@ -162,7 +162,7 @@ export default async function RelatoriosPage({ searchParams }: PageProps<"/relat
           <ul className="list-disc space-y-0.5 pl-4">
             <li>Período: semana seg–dom ou mês civil que contém a data de corte, limitado a ela. Fuso America/Sao_Paulo.</li>
             <li>Ações: situação atual no momento da geração; “atrasada” = prazo anterior à data de corte e não concluída/cancelada.</li>
-            <li>CH = minutos efetivos de presença ÷ minutos previstos pelas alocações vigentes, rateadas por dia útil; previsto zero = N/A; feriados ainda não descontados.</li>
+            <li>CH = minutos efetivos de presença ÷ minutos previstos pelas alocações vigentes, rateadas por dia útil; previsto zero = N/A; feriados e recessos do Calendário são descontados.</li>
             <li>Execução do plano = itens concluídos ÷ itens com prazo no período (cancelados excluídos), apenas planos publicados.</li>
             <li>Orçamento: saldo = aprovado − compromissos ainda não realizados − realizado; lançamentos cancelados excluídos; realizado vinculado consome o compromisso.</li>
             <li>Riscos: pontuação = probabilidade × impacto (1–5); crítico ≥ 15.</li>

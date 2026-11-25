@@ -36,10 +36,10 @@ export async function GET(request: NextRequest) {
       break;
     }
     case "ch": {
-      const { allocations, attendance } = await loadChData(supabase, programa, start, end);
+      const { allocations, attendance, nonWorking } = await loadChData(supabase, programa, start, end);
       const teams = [...new Set(allocations.map((a) => a.team_id).filter(Boolean))] as string[];
       rows = [["equipe_id", "pessoa_id", "previsto_min", "efetivo_min", "ch_pct"]];
-      for (const t of teams) for (const r of chByPerson(allocations, attendance, start, end, { teamId: t })) rows.push([t, r.person_id, r.planned, r.effective, r.pct === null ? "N/A" : Math.round(r.pct * 100) / 100]);
+      for (const t of teams) for (const r of chByPerson(allocations, attendance, start, end, { teamId: t, nonWorking })) rows.push([t, r.person_id, r.planned, r.effective, r.pct === null ? "N/A" : Math.round(r.pct * 100) / 100]);
       break;
     }
     case "riscos": {
