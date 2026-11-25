@@ -98,3 +98,16 @@ echo "Gerado: $dir/atualizacao_etapa4_1.sql"
   echo; echo "commit;"
 } > "$dir/atualizacao_etapa4_2.sql"
 echo "Gerado: $dir/atualizacao_etapa4_2.sql"
+
+# Etapa 4.3 = migrations a partir de 20261130 (avisos do workflow)
+{
+  header "ATUALIZAÇÃO — ETAPA 4.3 (avisos automáticos do workflow de ações)" "Execute UMA ÚNICA VEZ num banco com a Etapa 4.2."
+  echo "begin;"
+  echo "do \$\$ begin"
+  echo "  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'actions' and column_name = 'validation_requested_at') then raise exception 'Aplique antes a Etapa 4.2 (atualizacao_etapa4_2.sql).'; end if;"
+  echo "  if to_regprocedure('private.actions_notify()') is not null then raise exception 'Etapa 4.3 já instalada: nada a fazer.'; end if;"
+  echo "end \$\$;"
+  for f in supabase/migrations/20261130*.sql; do echo; echo "-- >>>>> $f"; cat "$f"; done
+  echo; echo "commit;"
+} > "$dir/atualizacao_etapa4_3.sql"
+echo "Gerado: $dir/atualizacao_etapa4_3.sql"

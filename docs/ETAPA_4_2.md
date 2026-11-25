@@ -23,3 +23,18 @@ Concluídas no período com data de conclusão ≤ prazo ÷ concluídas no perí
 ## Pendente
 - Teste autenticado pela usuária (quadro, aprovação, painel com dados reais).
 - Retomar FRC/Giaffone/E-Kart após o levantamento (`docs/LEVANTAMENTO_ETAPA_5.md`): basta reativá-las.
+
+---
+
+# Etapa 4.3 — Avisos automáticos do workflow
+
+- **Enviada para validação** → a supervisão da frente recebe aviso no sino (“Aguardando sua validação”).
+- **Aprovada** → o responsável recebe “Ação aprovada”.
+- **Devolvida** → o responsável recebe “Ação devolvida para ajuste”, com a orientação.
+- Quem fez a ação não recebe aviso dela; avisos de validação somem quando a supervisão decide.
+- Sem envio externo (e-mail/WhatsApp dependem do levantamento — `LEVANTAMENTO_ETAPA_5.md`, item B2).
+- Cores das etapas unificadas no quadro e nos gráficos: A fazer (amarelo), Em andamento (azul), Em validação (laranja), Concluída (verde).
+
+**Banco:** `supabase/migrations/20261130000100_avisos_workflow.sql`; para quem já tem a 4.2, colar `supabase/instalacao/atualizacao_etapa4_3.sql` (protegido contra execução dupla). `diagnostico.sql` ganhou a coluna `etapa4_3_avisos`.
+
+**Testes:** 132 (2 novos de avisos), lint, typecheck, build e 34 E2E públicos passando. Prévia visual conferida em desktop e celular com dados [DEMO] temporários (não versionados).

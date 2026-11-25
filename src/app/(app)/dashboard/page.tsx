@@ -190,7 +190,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                           </td>
                           <td className="w-1/3 py-2.5 pr-4">
                             <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${Math.round(pct)}% concluídas`}>
-                              <div className="h-full rounded-full bg-[#2a78d6]" style={{ width: `${pct}%` }} />
+                              <div className="h-full rounded-full bg-[#1baf7a]" style={{ width: `${pct}%` }} />
                             </div>
                           </td>
                           <td className="py-2.5 pr-4 text-right tabular-nums">{g.concluida}</td>

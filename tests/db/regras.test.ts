@@ -307,7 +307,7 @@ describe.skipIf(!hasDb)("Regras de negócio no banco", () => {
 
       await as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'concluida', 'feito')", [id]));
       await sql(c, "select * from refresh_alerts()");
-      const open = await sql(c, "select id from notifications where entity_id = $1 and resolved_at is null", [id]);
+      const open = await sql(c, "select id from notifications where entity_id = $1 and rule = 'acao_vencida' and resolved_at is null", [id]);
       expect(open).toHaveLength(0);
     });
 

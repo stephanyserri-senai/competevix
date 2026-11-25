@@ -83,7 +83,7 @@ Abra `supabase/instalacao/instalacao_completa.sql` no GitHub (botão **Raw**), c
 **uma única vez** no SQL Editor de um projeto novo. Contém todas as migrations e as referências do PRD,
 numa transação. Para regenerar após novas migrations: `scripts/bundle-sql.sh`.
 
-Projeto já instalado? Aplique, em ordem, só as atualizações que faltam: `supabase/instalacao/atualizacao_etapa2.sql`, `atualizacao_etapa3.sql` (ou `atualizacao_etapa3_ajuste.sql`), `atualizacao_etapa4.sql`, `atualizacao_etapa4_1.sql`, `atualizacao_etapa4_2.sql`
+Projeto já instalado? Aplique, em ordem, só as atualizações que faltam: `supabase/instalacao/atualizacao_etapa2.sql`, `atualizacao_etapa3.sql` (ou `atualizacao_etapa3_ajuste.sql`), `atualizacao_etapa4.sql`, `atualizacao_etapa4_1.sql`, `atualizacao_etapa4_2.sql`, `atualizacao_etapa4_3.sql`
 (mesmo procedimento). `supabase/instalacao/diagnostico.sql` mostra o que está instalado.
 
 ### Configurações obrigatórias no painel do Supabase (Auth)

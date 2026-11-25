@@ -15,4 +15,5 @@ select
   to_regclass('public.project_results') is not null               as etapa3_ajuste_resultados,
   to_regclass('public.budget_items') is not null                  as etapa4_gestao,
   to_regclass('public.calendar_days') is not null                 as etapa4_1_calendario,
-  exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'actions' and column_name = 'validation_requested_at') as etapa4_2_workflow;
+  exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'actions' and column_name = 'validation_requested_at') as etapa4_2_workflow,
+  to_regprocedure('private.actions_notify()') is not null          as etapa4_3_avisos;

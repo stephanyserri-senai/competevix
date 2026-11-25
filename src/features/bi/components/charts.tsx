@@ -6,6 +6,7 @@
  * legenda + tooltip + tabela equivalente). Marcas finas, 2px de respiro entre
  * segmentos, cantos de 4px na ponta, grade recessiva, um único eixo.
  */
+import { STAGE_COLOR } from "@/features/bi/colors";
 import {
   Bar, BarChart, CartesianGrid, LabelList, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
@@ -16,7 +17,7 @@ const GRID = "#e2e8f0";
 const tooltipStyle = { borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12, boxShadow: "0 8px 24px -12px rgba(15,23,42,.25)" };
 
 export type StackRow = { label: string; concluida: number; em_andamento: number; em_validacao: number; a_fazer: number };
-const STACK_KEYS: [keyof StackRow, string][] = [["concluida", "Concluída"], ["em_andamento", "Em andamento"], ["em_validacao", "Em validação"], ["a_fazer", "A fazer"]];
+const STACK_KEYS: ["a_fazer" | "em_andamento" | "em_validacao" | "concluida", string][] = [["a_fazer", "A fazer"], ["em_andamento", "Em andamento"], ["em_validacao", "Em validação"], ["concluida", "Concluída"]];
 
 export function StackedByGroup({ data, height = 220 }: { data: StackRow[]; height?: number }) {
   return (
@@ -27,9 +28,9 @@ export function StackedByGroup({ data, height = 220 }: { data: StackRow[]; heigh
           <XAxis type="number" allowDecimals={false} tick={AXIS} axisLine={false} tickLine={false} />
           <YAxis type="category" dataKey="label" width={130} tick={{ ...AXIS, fill: "#334155" }} axisLine={false} tickLine={false} />
           <Tooltip cursor={{ fill: "#f1f5f9" }} contentStyle={tooltipStyle} />
-          <Legend verticalAlign="top" align="left" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingBottom: 8, color: "#334155" }} />
+          <Legend itemSorter={null} verticalAlign="top" align="left" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingBottom: 8, color: "#334155" }} />
           {STACK_KEYS.map(([k, name], i) => (
-            <Bar key={k} dataKey={k} name={name} stackId="s" fill={SERIES[i]} stroke="#fff" strokeWidth={2} maxBarSize={22}
+            <Bar key={k} dataKey={k} name={name} stackId="s" fill={STAGE_COLOR[k]} stroke="#fff" strokeWidth={2} maxBarSize={22}
               radius={i === STACK_KEYS.length - 1 ? [0, 4, 4, 0] : 0} isAnimationActive={false} />
           ))}
         </BarChart>
@@ -47,9 +48,9 @@ export function WeeklyLines({ data, height = 240 }: { data: { week: string; labe
           <XAxis dataKey="label" tick={AXIS} axisLine={false} tickLine={false} interval="preserveStartEnd" />
           <YAxis allowDecimals={false} tick={AXIS} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "#94a3b8", strokeDasharray: "3 3" }} />
-          <Legend verticalAlign="top" align="left" iconType="plainline" iconSize={14} wrapperStyle={{ fontSize: 12, paddingBottom: 8, color: "#334155" }} />
-          <Line type="monotone" dataKey="concluidas" name="Concluídas" stroke={SERIES[0]} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }} isAnimationActive={false} />
-          <Line type="monotone" dataKey="criadas" name="Criadas" stroke={SERIES[1]} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }} isAnimationActive={false} />
+          <Legend itemSorter={null} verticalAlign="top" align="left" iconType="plainline" iconSize={14} wrapperStyle={{ fontSize: 12, paddingBottom: 8, color: "#334155" }} />
+          <Line type="monotone" dataKey="concluidas" name="Concluídas" stroke={STAGE_COLOR.concluida} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }} isAnimationActive={false} />
+          <Line type="monotone" dataKey="criadas" name="Criadas" stroke={STAGE_COLOR.em_andamento} strokeWidth={2} dot={false} activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>

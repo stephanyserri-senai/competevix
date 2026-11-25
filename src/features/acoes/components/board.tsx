@@ -1,5 +1,6 @@
 "use client";
 
+import { STAGE_COLOR } from "@/features/bi/colors";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -25,12 +26,12 @@ export type BoardCard = {
   isSupervisor: boolean;
 };
 
-const COLUMN_STYLE: Record<Stage, { dot: string; ring: string }> = {
-  a_fazer: { dot: "bg-slate-400", ring: "ring-slate-300" },
-  em_andamento: { dot: "bg-brand-500", ring: "ring-brand-300" },
-  em_validacao: { dot: "bg-accent-500", ring: "ring-accent-400" },
-  concluida: { dot: "bg-emerald-500", ring: "ring-emerald-300" },
-  cancelada: { dot: "bg-slate-300", ring: "ring-slate-200" },
+const COLUMN_STYLE: Record<Stage, { ring: string }> = {
+  a_fazer: { ring: "ring-amber-300" },
+  em_andamento: { ring: "ring-brand-300" },
+  em_validacao: { ring: "ring-orange-300" },
+  concluida: { ring: "ring-emerald-300" },
+  cancelada: { ring: "ring-slate-200" },
 };
 const ACTION_LABEL: Partial<Record<Stage, { label: string; icon: typeof Play }>> = {
   em_andamento: { label: "Iniciar", icon: Play },
@@ -118,7 +119,7 @@ export function ActionBoard({ cards: initial }: { cards: BoardCard[] }) {
               className={cn("flex min-h-48 flex-col rounded-2xl bg-slate-100/70 p-3 transition", overCol === col && "bg-brand-50 ring-2 ring-inset", overCol === col && COLUMN_STYLE[col].ring)}
             >
               <h2 className="mb-3 flex items-center gap-2 px-1 text-sm font-semibold text-slate-700">
-                <span className={cn("size-2.5 rounded-full", COLUMN_STYLE[col].dot)} aria-hidden />
+                <span className="size-2.5 rounded-full" style={{ backgroundColor: STAGE_COLOR[col] }} aria-hidden />
                 {STAGE_LABEL[col]}
                 <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">{items.length}</span>
               </h2>
