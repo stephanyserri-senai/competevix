@@ -182,6 +182,12 @@ export type Database = {
           created_at: string;
           updated_at: string;
           created_by: string | null;
+          theme: Database["public"]["Enums"]["action_theme"] | null;
+          blocked: boolean;
+          validation_requested_at: string | null;
+          validation_requested_by: string | null;
+          validated_at: string | null;
+          validated_by: string | null;
         };
         Insert: {
           id?: string;
@@ -205,6 +211,12 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           created_by?: string | null;
+          theme?: Database["public"]["Enums"]["action_theme"] | null;
+          blocked?: boolean;
+          validation_requested_at?: string | null;
+          validation_requested_by?: string | null;
+          validated_at?: string | null;
+          validated_by?: string | null;
         };
         Update: {
           id?: string;
@@ -228,6 +240,12 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           created_by?: string | null;
+          theme?: Database["public"]["Enums"]["action_theme"] | null;
+          blocked?: boolean;
+          validation_requested_at?: string | null;
+          validation_requested_by?: string | null;
+          validated_at?: string | null;
+          validated_by?: string | null;
         };
         Relationships: [
           {
@@ -264,6 +282,20 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "teams";
             referencedColumns: ["id", "program_id"];
+          },
+          {
+            foreignKeyName: "actions_validated_by_fkey";
+            columns: ["validated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "actions_validation_requested_by_fkey";
+            columns: ["validation_requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -3786,10 +3818,21 @@ export type Database = {
           created_at: string | null;
           updated_at: string | null;
           created_by: string | null;
+          theme: Database["public"]["Enums"]["action_theme"] | null;
+          blocked: boolean | null;
+          validation_requested_at: string | null;
+          validation_requested_by: string | null;
+          validated_at: string | null;
+          validated_by: string | null;
+          stage: string | null;
           is_overdue: boolean | null;
           days_to_due: number | null;
+          completed_on_time: boolean | null;
           evidence_count: number | null;
           open_dependencies: number | null;
+          competition_id: string | null;
+          unit_id: string | null;
+          cycle_id: string | null;
         };
         Relationships: [];
       };
@@ -3831,6 +3874,10 @@ export type Database = {
       link_person_to_user: {
         Args: { p_person: string; p_email: string };
         Returns: string;
+      };
+      move_action: {
+        Args: { p_action: string; p_stage: string; p_note?: string };
+        Returns: Database["public"]["Tables"]["actions"]["Row"];
       };
       my_access: {
         Args: never;
@@ -3892,6 +3939,10 @@ export type Database = {
         Args: { p_panel: string; p_note: string };
         Returns: Database["public"]["Tables"]["panels"]["Row"];
       };
+      set_action_blocked: {
+        Args: { p_action: string; p_blocked: boolean; p_reason?: string };
+        Returns: Database["public"]["Tables"]["actions"]["Row"];
+      };
       set_action_status: {
         Args: { p_action: string; p_status: Database["public"]["Enums"]["action_status"]; p_note?: string };
         Returns: Database["public"]["Tables"]["actions"]["Row"];
@@ -3913,6 +3964,7 @@ export type Database = {
       action_history_kind: "criada" | "status" | "edicao" | "comentario" | "evidencia" | "dependencia";
       action_priority: "baixa" | "media" | "alta" | "critica";
       action_status: "aberta" | "em_andamento" | "bloqueada" | "concluida" | "cancelada";
+      action_theme: "treino" | "infraestrutura" | "compras" | "pessoas" | "eventos" | "gestao" | "outro";
       assessment_status: "rascunho" | "publicado";
       assessment_type: "parcial" | "completo" | "externo" | "diagnostico";
       assignment_status: "pendente" | "submetida";
@@ -3970,6 +4022,7 @@ export const Constants = {
       action_history_kind: ["criada", "status", "edicao", "comentario", "evidencia", "dependencia"],
       action_priority: ["baixa", "media", "alta", "critica"],
       action_status: ["aberta", "em_andamento", "bloqueada", "concluida", "cancelada"],
+      action_theme: ["treino", "infraestrutura", "compras", "pessoas", "eventos", "gestao", "outro"],
       assessment_status: ["rascunho", "publicado"],
       assessment_type: ["parcial", "completo", "externo", "diagnostico"],
       assignment_status: ["pendente", "submetida"],

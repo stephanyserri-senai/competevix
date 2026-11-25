@@ -31,27 +31,27 @@ describe.skipIf(!hasDb)("Regras de negócio no banco", () => {
       const e = await expectError(
         as(c, s.users.supA, () => sql(c, "insert into actions (program_id, title, status) values ($1, 'já concluída', 'concluida')", [s.programs.P1])),
       );
-      expect(e).toMatch(/começar em aberto/);
+      expect(e).toMatch(/começar/);
     });
 
-    it("bloqueio exige motivo e conclusão registra autor e instante", async () => {
+    it("bloqueio é um sinal com motivo; conclusão pela supervisão registra autor e instante", async () => {
       const id = await newAction("Bloqueio");
-      const e = await expectError(as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'bloqueada', null)", [id])));
-      expect(e).toMatch(/actions_blocked_ck/);
-      await as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'bloqueada', 'aguardando insumo')", [id]));
-      await as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'em_andamento', null)", [id]));
+      const e = await expectError(as(c, s.users.supA, () => sql(c, "select * from set_action_blocked($1, true, null)", [id])));
+      expect(e).toMatch(/motivo do bloqueio/);
+      const legacy = await expectError(as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'bloqueada', 'x')", [id])));
+      expect(legacy).toMatch(/descontinuado/);
+      await as(c, s.users.supA, () => sql(c, "select * from set_action_blocked($1, true, 'aguardando insumo')", [id]));
+      await as(c, s.users.supA, () => sql(c, "select * from move_action($1, 'em_andamento')", [id]));
       const [row] = await as(c, s.users.supA, () =>
-        sql<{ status: string; completed_by: string; blocked_reason: string | null }>(c, "select * from set_action_status($1, 'concluida', 'feito')", [id]),
+        sql<{ status: string; completed_by: string; blocked: boolean; validated_by: string }>(c, "select * from move_action($1, 'concluida', 'feito')", [id]),
       );
-      expect(row.status).toBe("concluida");
-      expect(row.completed_by).toBe(s.users.supA);
-      expect(row.blocked_reason).toBeNull();
+      expect(row).toMatchObject({ status: "concluida", completed_by: s.users.supA, validated_by: s.users.supA, blocked: false });
     });
 
     it("transição inválida é rejeitada e reabertura exige justificativa auditada", async () => {
       const id = await newAction("Reabertura");
       await as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'cancelada', 'não se aplica')", [id]));
-      const e = await expectError(as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'em_andamento', null)", [id])));
+      const e = await expectError(as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'concluida', null)", [id])));
       expect(e).toMatch(/Transição/);
       const e2 = await expectError(as(c, s.users.supA, () => sql(c, "select set_action_status($1, 'aberta', '  ')", [id])));
       expect(e2).toMatch(/justificativa/);
