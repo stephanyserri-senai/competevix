@@ -291,7 +291,7 @@ describe.skipIf(!hasDb)("Regras de negócio no banco", () => {
   describe("Alertas e auditoria", () => {
     it("alertas são idempotentes e resolvidos quando a condição cessa", async () => {
       const id = await as(c, s.users.supA, async () =>
-        (await sql<{ id: string }>(c, "insert into actions (program_id, title, due_date, owner_person_id) values ($1, 'Prazo vencido', current_date - 1, $2) returning id", [s.programs.P1, s.people.pOrient1]))[0].id,
+        (await sql<{ id: string }>(c, "insert into actions (program_id, title, due_date, owner_person_id) values ($1, 'Prazo vencido', (now() at time zone 'America/Sao_Paulo')::date - 1, $2) returning id", [s.programs.P1, s.people.pOrient1]))[0].id,
       );
       await sql(c, "set role service_role");
       await sql(c, "select * from refresh_alerts()");

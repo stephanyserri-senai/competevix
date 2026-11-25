@@ -9,7 +9,11 @@ import { translateDbError } from "@/lib/errors";
 import { documentMetaSchema } from "@/features/schemas";
 import { ALLOWED_TYPES, signatureMatches, validateFileMeta } from "./domain";
 
-export type LinkTarget = { type: "action"; id: string } | { type: "checklist_answer"; id: string } | null;
+export type LinkTarget =
+  | { type: "action"; id: string }
+  | { type: "checklist_answer"; id: string }
+  | { type: "project"; id: string; kind: string; description: string }
+  | null;
 
 type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -82,6 +86,15 @@ export async function finalizeUpload(documentId: string, link: LinkTarget, reval
 
   if (link?.type === "action") {
     const { error: e } = await supabase.from("action_evidences").insert({ action_id: link.id, program_id: doc.program_id, document_id: doc.id });
+    if (e) return { ok: false, message: translateDbError(e) };
+  } else if (link?.type === "project") {
+    const kinds = ["comparacao_mercado", "diferencial_tecnico", "validacao_industrial", "teste_produtividade_custo_qualidade", "viabilidade_financeira", "modelo_negocio", "anterioridade", "prototipo_funcional", "outro"] as const;
+    const kind = kinds.find((k) => k === link.kind) ?? "outro";
+    const { data: claims } = await supabase.auth.getClaims();
+    const { error: e } = await supabase.from("project_evidences").insert({
+      project_id: link.id, program_id: doc.program_id, document_id: doc.id, kind,
+      description: link.description.slice(0, 2000) || "Documento anexado", created_by: claims?.claims?.sub,
+    });
     if (e) return { ok: false, message: translateDbError(e) };
   } else if (link?.type === "checklist_answer") {
     const { error: e } = await supabase.from("checklist_answer_evidences").insert({ answer_id: link.id, program_id: doc.program_id, document_id: doc.id });

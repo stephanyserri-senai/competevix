@@ -58,7 +58,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <>
         {header}
         <EmptyState title="Sem vínculo operacional vigente">
-          {access.isAdmin
+          {Object.values(access.roles).some((r) => r.includes("avaliador"))
+            ? <>Seu acesso é de avaliador(a): veja as bancas atribuídas em <Link href="/bancas" className="font-medium text-brand-700 hover:underline">Minhas bancas</Link>.</>
+            : access.isAdmin
             ? "Como administrador(a), você gerencia usuários e configurações, mas não tem acesso automático a dados operacionais. Use Configurações."
             : "Seu acesso ainda não foi vinculado a um programa. Procure a administração."}
         </EmptyState>

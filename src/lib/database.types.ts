@@ -2007,7 +2007,7 @@ export type Database = {
           id?: string;
           project_id: string;
           program_id: string;
-          stage: Database["public"]["Enums"]["project_stage"];
+          stage?: Database["public"]["Enums"]["project_stage"];
           kind: Database["public"]["Enums"]["project_evidence_kind"];
           description: string;
           document_id?: string | null;

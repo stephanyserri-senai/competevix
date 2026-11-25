@@ -33,3 +33,16 @@ echo "Gerado: $dir/instalacao_completa.sql"
   echo; echo "commit;"
 } > "$dir/atualizacao_etapa2.sql"
 echo "Gerado: $dir/atualizacao_etapa2.sql"
+
+# Etapa 3 = migrations a partir de 20261126 (inclui renomear ciclo para 2027–2028)
+{
+  header "ATUALIZAÇÃO — ETAPA 3 (INOVA SENAI) + ciclo 2027–2028" "Execute UMA ÚNICA VEZ num banco que já recebeu as Etapas 1 e 2."
+  echo "begin;"
+  echo "do \$\$ begin"
+  echo "  if to_regclass('public.training_plans') is null then raise exception 'Instale primeiro a Etapa 2 (atualizacao_etapa2.sql).'; end if;"
+  echo "  if to_regclass('public.projects') is not null then raise exception 'Etapa 3 já instalada: nada a fazer.'; end if;"
+  echo "end \$\$;"
+  for f in supabase/migrations/20261126*.sql; do echo; echo "-- >>>>> $f"; cat "$f"; done
+  echo; echo "commit;"
+} > "$dir/atualizacao_etapa3.sql"
+echo "Gerado: $dir/atualizacao_etapa3.sql"

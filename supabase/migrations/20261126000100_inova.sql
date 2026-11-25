@@ -54,8 +54,8 @@ create table public.project_evidences (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null,
   program_id uuid not null,
-  -- Etapa do funil em que a evidência foi registrada (preenchida pelo banco)
-  stage public.project_stage not null,
+  -- Etapa do funil em que a evidência foi registrada (sempre sobrescrita pelo gatilho)
+  stage public.project_stage not null default 'prospeccao',
   kind public.project_evidence_kind not null,
   description text not null check (length(btrim(description)) between 3 and 2000),
   document_id uuid,

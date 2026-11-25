@@ -16,12 +16,12 @@ export const DEFAULT_BANDS: Band[] = [
   { min: 0, rotulo: "Insuficiente" },
 ];
 
-export function leaves(criteria: Criterion[]) {
+export function leaves<T extends Criterion>(criteria: T[]): T[] {
   const parents = new Set(criteria.map((c) => c.parent_id).filter(Boolean));
   return criteria.filter((c) => !parents.has(c.id));
 }
 
-export function topLevel(criteria: Criterion[]) {
+export function topLevel<T extends Criterion>(criteria: T[]): T[] {
   return criteria.filter((c) => !c.parent_id).sort((a, b) => a.position - b.position);
 }
 

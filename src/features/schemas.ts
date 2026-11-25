@@ -410,6 +410,55 @@ export const reportStatusSchema = z.object({
   note: zOptText(2000, "Observação"),
 });
 
+/* --------------------------------------------------------- Etapa 3: INOVA */
+const STAGE_VALUES = ["prospeccao", "selecao", "anterioridade", "validacao_problema", "prototipo", "validacao_tecnica_financeira", "banca_pitch", "prioritario"] as const;
+const EVIDENCE_VALUES = ["comparacao_mercado", "diferencial_tecnico", "validacao_industrial", "teste_produtividade_custo_qualidade", "viabilidade_financeira", "modelo_negocio", "anterioridade", "prototipo_funcional", "outro"] as const;
+
+export const projectSchema = z.object({
+  id: zOptId,
+  program_id: zUuid("Programa"),
+  team_id: zUuid("Equipe"),
+  title: zText(3, 200, "Título"),
+  problem: zOptText(4000, "Problema"),
+  solution: zOptText(4000, "Solução"),
+  partner_company: zOptText(200, "Empresa parceira"),
+  value_proposition: zOptText(4000, "Proposta de valor"),
+  differential: zOptText(4000, "Diferencial"),
+  business_model: zOptText(4000, "Modelo de negócio"),
+});
+
+export const projectEvidenceSchema = z
+  .object({
+    project_id: zUuid("Projeto"),
+    program_id: zUuid("Programa"),
+    kind: z.enum(EVIDENCE_VALUES),
+    description: zText(3, 2000, "Descrição"),
+    url: z.preprocess(emptyToNull, z.string().trim().max(2000).regex(/^https:\/\/\S+$/i, "Informe um endereço https:// válido.").nullable()),
+  })
+  .refine((d) => d.url !== null || d.kind === "outro" || d.description.length >= 20, { path: ["description"], message: "Sem link, descreva a evidência com ao menos 20 caracteres." });
+
+export const advanceSchema = z.object({ project_id: zUuid("Projeto"), to_stage: z.enum(STAGE_VALUES), note: zOptText(2000, "Justificativa") });
+
+export const panelSchema = z.object({
+  program_id: zUuid("Programa"),
+  project_id: zUuid("Projeto"),
+  rubric_version_id: zUuid("Rubrica"),
+  title: zText(3, 160, "Título"),
+  held_on: zDate("Data"),
+});
+
+export const assignmentSchema = z.object({ panel_id: zUuid("Banca"), program_id: zUuid("Programa"), evaluator_id: zUuid("Avaliador") });
+export const reviseSchema = z.object({ id: zUuid("Banca"), note: zText(3, 2000, "Motivo da revisão") });
+
+export const criterionSchema = z.object({
+  version_id: zUuid("Versão"),
+  parent_id: zOptUuid("Grupo"),
+  code: zText(1, 30, "Código"),
+  name: zText(2, 160, "Nome"),
+  max_score: z.coerce.number().positive("Máximo deve ser positivo.").max(1000),
+  position: z.coerce.number().int().min(0).max(100).default(0),
+});
+
 export const SCHEMAS = {
   unit: unitSchema,
   competition: competitionSchema,
@@ -451,6 +500,13 @@ export const SCHEMAS = {
   scoreTarget: scoreTargetSchema,
   weeklyReport: weeklyReportSchema,
   reportStatus: reportStatusSchema,
+  project: projectSchema,
+  projectEvidence: projectEvidenceSchema,
+  advance: advanceSchema,
+  panel: panelSchema,
+  assignment: assignmentSchema,
+  revise: reviseSchema,
+  criterion: criterionSchema,
 } as const;
 
 export type SchemaKey = keyof typeof SCHEMAS;
