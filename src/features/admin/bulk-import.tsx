@@ -7,7 +7,8 @@ import { Alert } from "@/components/ui/feedback";
 import { Badge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
 import { importUsers, type ImportState } from "./import-actions";
-import { CSV_TEMPLATE, toCsv } from "./import-domain";
+import { CSV_TEMPLATE } from "./import-domain";
+import { toCsv } from "@/lib/csv";
 
 function download(name: string, content: string) {
   const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" }));

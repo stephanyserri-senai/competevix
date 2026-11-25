@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseUsersCsv, splitCsvLine, parseDate, toCsv } from "@/features/admin/import-domain";
+import { parseUsersCsv, splitCsvLine, parseDate } from "@/features/admin/import-domain";
+import { toCsv } from "@/lib/csv";
 
 const catalog = {
   units: [

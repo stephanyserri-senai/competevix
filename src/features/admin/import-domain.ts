@@ -162,8 +162,3 @@ export function personKindFor(role: ImportRole): "docente" | "aluno" | null {
   if (role === "competidor") return "aluno";
   return null;
 }
-
-export function toCsv(rows: string[][]): string {
-  const esc = (v: string) => (/[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
-  return "﻿" + rows.map((r) => r.map(esc).join(";")).join("\r\n") + "\r\n";
-}
