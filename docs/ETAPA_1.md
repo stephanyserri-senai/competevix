@@ -21,7 +21,7 @@ Data: 24/11/2026 · Referência: PRD v0.1 §12 (item 1) · Plano: `docs/PLANO_IM
 
 ### Seeds
 
-- `supabase/seed/references.sql`: unidades Beira-Mar e Porto; competições WorldSkills, INOVA, FRC, Giaffone, E-Kart; ciclo 2027 **sem datas**; programas WS Beira-Mar, WS Porto e INOVA Beira-Mar; ocupações #33 (760), #48 (750), #50 (770) com a fonte “infográfico — validar”. Nenhuma pessoa, nota ou data inventada.
+- `supabase/seed/references.sql`: unidades Beira-Mar e Porto; competições WorldSkills, INOVA, FRC, Giaffone, E-Kart; ciclo 2027 **sem datas** (renomeado para 2027–2028 em 25/11/2026); programas WS Beira-Mar, WS Porto e INOVA Beira-Mar; ocupações #33 (760), #48 (750), #50 (770) com a fonte “infográfico — validar”. Nenhuma pessoa, nota ou data inventada.
 - `supabase/seed/demo.sql`: dados fictícios rotulados `[DEMO]`, em unidades e ciclo próprios (DEMO-A, DEMO-B, DEMO), apenas para desenvolvimento.
 - Backlog da reunião (PRD §11): importado pela interface para o programa escolhido pela supervisão, porque o PRD não indica a que programa/unidade pertence cada item.
 

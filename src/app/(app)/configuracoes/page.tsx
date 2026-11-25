@@ -74,7 +74,7 @@ export default async function ConfiguracoesPage({ searchParams }: PageProps<"/co
               <ul className="list-disc space-y-1 pl-5">
                 <li><strong>papel</strong>: supervisao, orientador, competidor, gestao ou avaliador.</li>
                 <li><strong>unidade</strong>: código (BEIRA-MAR, PORTO) ou nome.</li>
-                <li><strong>competicao</strong> + <strong>ciclo</strong>: códigos do programa (ex.: WORLDSKILLS e 2027). Em branco = unidade inteira (só supervisão e gestão).</li>
+                <li><strong>competicao</strong> + <strong>ciclo</strong>: códigos do programa (ex.: WORLDSKILLS e 2027-2028). Em branco = unidade inteira (só supervisão e gestão).</li>
                 <li><strong>inicio</strong>/<strong>fim</strong>: opcionais (DD/MM/AAAA). Avaliadores: informe o fim.</li>
                 <li>Mais de um papel ou programa para a mesma pessoa = uma linha para cada.</li>
               </ul>

@@ -7,14 +7,14 @@ const catalog = {
     { id: "u2", code: "PORTO", name: "SENAI Vitória — Porto" },
   ],
   programs: [
-    { id: "p1", unit_id: "u1", competition_code: "WORLDSKILLS", cycle_code: "2027" },
-    { id: "p2", unit_id: "u2", competition_code: "WORLDSKILLS", cycle_code: "2027" },
+    { id: "p1", unit_id: "u1", competition_code: "WORLDSKILLS", cycle_code: "2027-2028" },
+    { id: "p2", unit_id: "u2", competition_code: "WORLDSKILLS", cycle_code: "2027-2028" },
   ],
 };
 
 describe("importação de usuários (CSV)", () => {
   it("aceita ; ou , , aliases de cabeçalho/papel e datas BR", () => {
-    const csv = "E-mail,Nome,Perfil,Unidade,Competição,Ciclo,Início,Fim\nA@X.invalid,Ana Souza,Supervisão,beira-mar,,,,\nb@x.invalid,Bruno,orientadora,PORTO,worldskills,2027,01/12/2026,31/12/2027\n";
+    const csv = "E-mail,Nome,Perfil,Unidade,Competição,Ciclo,Início,Fim\nA@X.invalid,Ana Souza,Supervisão,beira-mar,,,,\nb@x.invalid,Bruno,orientadora,PORTO,worldskills,2027-2028,01/12/2026,31/12/2027\n";
     const { rows, issues } = parseUsersCsv(csv, catalog, "2026-11-25");
     expect(issues).toEqual([]);
     expect(rows[0]).toMatchObject({ email: "a@x.invalid", role: "supervisao", unitId: "u1", programId: null, validFrom: "2026-11-25" });
@@ -27,8 +27,8 @@ describe("importação de usuários (CSV)", () => {
       "sem-arroba;Fulano;supervisao;PORTO;;;;",
       "c@x.invalid;Ci;competidor;PORTO;;;;",
       "d@x.invalid;Dani;chefe;PORTO;;;;",
-      "e@x.invalid;Edu;orientador;LUA;WORLDSKILLS;2027;;",
-      "f@x.invalid;Fê;orientador;PORTO;INOVA;2027;;",
+      "e@x.invalid;Edu;orientador;LUA;WORLDSKILLS;2027-2028;;",
+      "f@x.invalid;Fê;orientador;PORTO;INOVA;2027-2028;;",
       "g@x.invalid;Gil;gestao;PORTO;;;2027-02-30;",
       "h@x.invalid;Hugo;gestao;PORTO;;;2027-02-01;2027-01-01",
       "i@x.invalid;Iara;supervisao;PORTO;;;;",

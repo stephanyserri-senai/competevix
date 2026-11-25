@@ -5,7 +5,7 @@
  *   email; nome; papel; unidade; competicao; ciclo; inicio; fim
  * - papel: supervisao | orientador | competidor | gestao | avaliador
  * - unidade: código (ex.: BEIRA-MAR) ou nome da unidade
- * - competicao + ciclo (códigos, ex.: WORLDSKILLS + 2027): vínculo com o programa.
+ * - competicao + ciclo (códigos, ex.: WORLDSKILLS + 2027-2028): vínculo com o programa.
  *   Em branco = vínculo com a unidade inteira (só supervisão e gestão).
  * - inicio/fim: AAAA-MM-DD ou DD/MM/AAAA (inicio em branco = hoje; fim opcional)
  * Uma pessoa com vários papéis/programas ocupa várias linhas (mesmo e-mail).
@@ -16,7 +16,7 @@ export const IMPORT_ROLES: ImportRole[] = ["supervisao", "orientador", "competid
 export const CSV_TEMPLATE =
   "email;nome;papel;unidade;competicao;ciclo;inicio;fim\n" +
   "pessoa@exemplo.invalid;Nome da Pessoa;supervisao;BEIRA-MAR;;;;\n" +
-  "outra@exemplo.invalid;Outra Pessoa;orientador;BEIRA-MAR;WORLDSKILLS;2027;;\n";
+  "outra@exemplo.invalid;Outra Pessoa;orientador;BEIRA-MAR;WORLDSKILLS;2027-2028;;\n";
 
 export type Catalog = {
   units: { id: string; code: string; name: string }[];
