@@ -107,7 +107,7 @@ export default async function CompeticoesPage({ searchParams }: PageProps<"/comp
             <ActionForm action={createProgram} schema="program" submitLabel="Criar programa" resetOnSuccess className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>button]:self-end">
               <SelectField name="competition_id" label="Competição" required defaultValue="">
                 <option value="" disabled>Selecione…</option>
-                {(competitions ?? []).filter((c) => !c.archived_at).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {(competitions ?? []).filter((c) => !c.archived_at && c.active).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </SelectField>
               <SelectField name="cycle_id" label="Ciclo" required defaultValue="">
                 <option value="" disabled>Selecione…</option>
@@ -127,14 +127,14 @@ export default async function CompeticoesPage({ searchParams }: PageProps<"/comp
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Competições" description="Catálogo institucional. FRC, Giaffone e E-Kart usam módulos comuns até o levantamento específico (etapa 5)." />
+          <CardHeader title="Competições" description="Catálogo institucional. Competições em standby ficam fora da criação de programas até serem retomadas." />
           <CardBody className="space-y-3">
             <ul className="divide-y divide-slate-100">
               {(competitions ?? []).map((c) => (
                 <li key={c.id} className="py-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="font-medium text-slate-900">{c.name} <span className="text-xs text-slate-500">({c.code})</span></p>
+                      <p className="font-medium text-slate-900">{c.name} <span className="text-xs text-slate-500">({c.code})</span>{!c.active && !c.archived_at ? <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Em standby</span> : null}</p>
                       <p className="text-xs text-slate-600">{COMPETITION_KIND_LABEL[c.kind]}{c.archived_at ? " · arquivada" : ""}</p>
                     </div>
                     {access.isAdmin ? (
@@ -167,7 +167,7 @@ export default async function CompeticoesPage({ searchParams }: PageProps<"/comp
                 <li key={c.id} className="py-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="font-medium text-slate-900">{c.name} <span className="text-xs text-slate-500">({c.code})</span></p>
+                      <p className="font-medium text-slate-900">{c.name} <span className="text-xs text-slate-500">({c.code})</span>{!c.active && !c.archived_at ? <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Em standby</span> : null}</p>
                       <p className="text-xs text-slate-600">
                         {c.start_date || c.end_date ? `${formatDate(c.start_date)} a ${formatDate(c.end_date)}` : "Datas a definir"}
                         {c.archived_at ? " · arquivado" : ""}

@@ -178,7 +178,8 @@ export const actionSchema = z
     owner_person_id: zOptUuid("Responsável"),
     start_date: zOptDate("Início"),
     due_date: zOptDate("Prazo"),
-    priority: z.enum(["baixa", "media", "alta", "critica"]),
+    priority: z.enum(["baixa", "media", "alta", "critica"]).default("media"),
+    theme: z.preprocess(emptyToNull, z.enum(["treino", "infraestrutura", "compras", "pessoas", "eventos", "gestao", "outro"]).nullable()).optional(),
     requires_evidence: zCheckbox,
   })
   .refine((d) => !d.start_date || !d.due_date || d.due_date >= d.start_date, { path: ["due_date"], message: "Prazo deve ser igual ou posterior ao início." });

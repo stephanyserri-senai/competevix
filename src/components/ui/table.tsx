@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 /** Tabela responsiva: rola horizontalmente em telas estreitas, com legenda acessível. */
 export function Table({ caption, children, className }: { caption: string; children: ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-x-auto rounded-lg border border-slate-200 bg-white", className)}>
+    <div className={cn("overflow-x-auto rounded-2xl border border-slate-200/80 bg-white", className)}>
       <table className="min-w-full divide-y divide-slate-200 text-sm">
         <caption className="sr-only">{caption}</caption>
         {children}

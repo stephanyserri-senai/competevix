@@ -85,3 +85,16 @@ echo "Gerado: $dir/atualizacao_etapa4.sql"
   echo; echo "commit;"
 } > "$dir/atualizacao_etapa4_1.sql"
 echo "Gerado: $dir/atualizacao_etapa4_1.sql"
+
+# Etapa 4.2 = migrations a partir de 20261129 (workflow de ações com validação + standby)
+{
+  header "ATUALIZAÇÃO — ETAPA 4.2 (workflow de ações com validação, tema, bloqueio e BI)" "Execute UMA ÚNICA VEZ num banco com as Etapas 1–4.1."
+  echo "begin;"
+  echo "do \$\$ begin"
+  echo "  if to_regclass('public.calendar_days') is null then raise exception 'Aplique antes a Etapa 4.1 (atualizacao_etapa4_1.sql).'; end if;"
+  echo "  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'actions' and column_name = 'validation_requested_at') then raise exception 'Etapa 4.2 já instalada: nada a fazer.'; end if;"
+  echo "end \$\$;"
+  for f in supabase/migrations/20261129*.sql; do echo; echo "-- >>>>> $f"; cat "$f"; done
+  echo; echo "commit;"
+} > "$dir/atualizacao_etapa4_2.sql"
+echo "Gerado: $dir/atualizacao_etapa4_2.sql"
